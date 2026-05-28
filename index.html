@@ -169,9 +169,22 @@
             box-shadow: 0 0 0 2px rgba(242, 101, 34, 0.2);
         }
 
-        /* Chọn tuần */
-        .week-select-row { margin-bottom: 15px; }
-        .week-select-row select { max-width: 250px; }
+        /* Chọn tuần & Lọc đội */
+        .filter-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+        .filter-row > div {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .filter-row select {
+            width: auto;
+            min-width: 140px;
+        }
 
         /* Scroll wrapper cho bảng rộng */
         .table-scroll-wrapper {
@@ -282,19 +295,27 @@
                     <button class="tab-btn" onclick="switchSport('swim', this)">🏊 Bơi Lội (x20)</button>
                 </div>
                 
-                <!-- Chọn tuần -->
-                <div class="week-select-row">
-                    <label>Chọn Tuần Nhập Liệu:</label>
-                    <select id="week-select" onchange="renderScoreTable()">
-                        <option value="week1">Tuần 1</option>
-                        <option value="week2">Tuần 2</option>
-                        <option value="week3">Tuần 3</option>
-                        <option value="week4">Tuần 4</option>
-                        <option value="week5">Tuần 5</option>
-                        <option value="week6">Tuần 6</option>
-                        <option value="week7">Tuần 7</option>
-                        <option value="week8">Tuần 8</option>
-                    </select>
+                <!-- Chọn tuần và Đội -->
+                <div class="filter-row">
+                    <div>
+                        <label>Tuần:</label>
+                        <select id="week-select" onchange="renderScoreTable()">
+                            <option value="week1">Tuần 1</option>
+                            <option value="week2">Tuần 2</option>
+                            <option value="week3">Tuần 3</option>
+                            <option value="week4">Tuần 4</option>
+                            <option value="week5">Tuần 5</option>
+                            <option value="week6">Tuần 6</option>
+                            <option value="week7">Tuần 7</option>
+                            <option value="week8">Tuần 8</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Đội:</label>
+                        <select id="team-filter" onchange="renderScoreTable()">
+                            <option value="all">-- Tất cả --</option>
+                        </select>
+                    </div>
                 </div>
 
                 <!-- Upload Excel -->
@@ -424,46 +445,62 @@
             text += teamName + "\n" + members.join("\n") + "\n\n";
         }
         document.getElementById('team-input').value = text.trim();
+        updateTeamFilter();
+    }
+
+    // Cập nhật dropdown chọn Đội
+    function updateTeamFilter() {
+        let select = document.getElementById('team-filter');
+        if (!select) return;
+        let oldVal = select.value;
+        select.innerHTML = '<option value="all">-- Tất cả --</option>';
+        for (const teamName of Object.keys(db.teams)) {
+            let opt = document.createElement('option');
+            opt.value = teamName;
+            opt.textContent = teamName;
+            select.appendChild(opt);
+        }
+        if (oldVal && Object.keys(db.teams).includes(oldVal)) {
+            select.value = oldVal;
+        }
     }
 
     // Render bảng nhập điểm dạng ô: 2 cột Tên + Thành tích
     function renderScoreTable() {
         let container = document.getElementById('score-table-container');
         let week = document.getElementById('week-select').value;
+        let team = document.getElementById('team-filter').value;
         let sportData = db.sports[currentSport][week] || {};
 
-        let existingNames = Object.keys(sportData);
-        let allMembers = [];
-        for (const [teamName, members] of Object.entries(db.teams)) {
-            members.forEach(m => {
-                if(!allMembers.includes(m)) allMembers.push(m);
-            });
-        }
+        let displayNames = [];
 
-        let displayNames = [...allMembers];
-        existingNames.forEach(name => {
-            if(!displayNames.includes(name)) displayNames.push(name);
-        });
-
-        if(displayNames.length === 0) {
-            displayNames = ['', '', '', '', ''];
+        if (team === 'all') {
+            // Hiển thị những người đã có điểm, nếu trống thì để 1 dòng trống để nhập
+            displayNames = Object.keys(sportData);
+            if(displayNames.length === 0) {
+                displayNames = ['']; 
+            }
+        } else {
+            // Lọc theo đội
+            displayNames = db.teams[team] || [];
+            if(displayNames.length === 0) {
+                displayNames = [''];
+            }
         }
 
         let tableHTML = `<table class="score-table" id="score-table">
             <thead>
                 <tr>
-                    <th style="width:35px">STT</th>
                     <th style="text-align:left; padding-left:8px;">Tên VĐV</th>
                     <th style="width:140px">Thành Tích (km)</th>
-                    <th style="width:40px"></th>
                 </tr>
             </thead>
             <tbody>`;
 
         let rowData = [];
-        displayNames.forEach((name, idx) => {
+        displayNames.forEach((name) => {
             let val = sportData[name] !== undefined ? sportData[name] : '';
-            tableHTML += buildRowHTML(idx);
+            tableHTML += buildRowHTML();
             rowData.push({name, val});
         });
 
@@ -478,18 +515,14 @@
         });
     }
 
-    // Tạo HTML cho 1 dòng bảng (chưa có value)
-    function buildRowHTML(idx) {
+    // Tạo HTML cho 1 dòng bảng (chỉ có 2 cột giống Excel)
+    function buildRowHTML() {
         return `<tr>
-            <td class="stt">${idx + 1}</td>
             <td>
                 <input type="text" class="input-name" placeholder="Nhập tên VĐV...">
             </td>
             <td>
                 <input type="number" class="input-score" placeholder="0.0" step="0.01" min="0">
-            </td>
-            <td style="text-align:center;">
-                <button class="btn-remove" onclick="removeRow(this)" title="Xóa dòng">✕</button>
             </td>
         </tr>`;
     }
@@ -497,22 +530,14 @@
     // Thêm dòng mới vào bảng
     function addRow() {
         let tbody = document.querySelector('#score-table tbody');
-        if(!tbody) {
-            renderScoreTable();
-            tbody = document.querySelector('#score-table tbody');
-        }
-        let rowCount = tbody.rows.length;
+        if(!tbody) return;
         let tr = document.createElement('tr');
         tr.innerHTML = `
-            <td class="stt">${rowCount + 1}</td>
             <td>
-                <input type="text" class="input-name" value="" placeholder="Nhập tên VĐV...">
+                <input type="text" class="input-name" placeholder="Nhập tên VĐV...">
             </td>
             <td>
-                <input type="number" class="input-score" value="" placeholder="0.0" step="0.01" min="0">
-            </td>
-            <td style="text-align:center;">
-                <button class="btn-remove" onclick="removeRow(this)" title="Xóa dòng">✕</button>
+                <input type="number" class="input-score" placeholder="0.0" step="0.01" min="0">
             </td>`;
         tbody.appendChild(tr);
         tr.querySelector('.input-name').focus();
@@ -616,10 +641,8 @@
         let tableHTML = `<table class="score-table" id="score-table">
             <thead>
                 <tr>
-                    <th style="width:35px">STT</th>
                     <th style="text-align:left; padding-left:8px;">Tên VĐV</th>
                     <th style="width:140px">Thành Tích (km)</th>
-                    <th style="width:40px"></th>
                 </tr>
             </thead>
             <tbody>`;
@@ -642,7 +665,7 @@
             let score = parseFloat(scoreStr);
             let val = !isNaN(score) ? score : '';
             
-            tableHTML += buildRowHTML(count);
+            tableHTML += buildRowHTML();
             rowData.push({name, val});
             count++;
         }
@@ -775,12 +798,18 @@
 
             let trs = tbody.querySelectorAll('tr');
             let existingInputs = {};
+            let emptyRows = [];
             
             trs.forEach(tr => {
                 let nameInput = tr.querySelector('.input-name');
                 let scoreInput = tr.querySelector('.input-score');
-                if (nameInput && nameInput.value.trim()) {
-                    existingInputs[nameInput.value.trim().toLowerCase()] = scoreInput;
+                if (nameInput) {
+                    let n = nameInput.value.trim();
+                    if (n) {
+                        existingInputs[n.toLowerCase()] = { nameInput, scoreInput };
+                    } else {
+                        emptyRows.push({ nameInput, scoreInput });
+                    }
                 }
             });
             
@@ -791,26 +820,30 @@
                 let row = pasteMap[key];
                 if (existingInputs[key]) {
                     // Cập nhật thành tích cho người đã có
-                    existingInputs[key].value = row.score;
+                    existingInputs[key].scoreInput.value = row.score;
                     filled++;
+                } else if (emptyRows.length > 0) {
+                    // Sử dụng dòng trống để điền
+                    let emptyRow = emptyRows.shift();
+                    emptyRow.nameInput.value = row.name;
+                    emptyRow.scoreInput.value = row.score;
+                    existingInputs[key] = emptyRow;
+                    newCount++;
                 } else {
                     // Tạo dòng mới
-                    let rowCount = tbody.rows.length;
                     let tr = document.createElement('tr');
                     tr.innerHTML = `
-                        <td class="stt">${rowCount + 1}</td>
-                        <td><input type="text" class="input-name" placeholder="Nhập tên VĐV..."></td>
+                        <td><input type="text" class="input-name" placeholder="Tên VĐV..."></td>
                         <td><input type="number" class="input-score" placeholder="0.0" step="0.01" min="0"></td>
-                        <td style="text-align:center;"><button class="btn-remove" onclick="removeRow(this)">✕</button></td>
                     `;
                     tr.querySelector('.input-name').value = row.name;
                     tr.querySelector('.input-score').value = row.score;
                     tbody.appendChild(tr);
-                    existingInputs[key] = tr.querySelector('.input-score'); // Lưu lại để khỏi trùng lặp
+                    existingInputs[key] = { nameInput: tr.querySelector('.input-name'), scoreInput: tr.querySelector('.input-score') };
                     newCount++;
                 }
             }
-            showToast(`Smart Paste: Cập nhật ${filled} VĐV, thêm mới ${newCount} VĐV. Nhấn "Lưu Thành Tích" để lưu.`);
+            showToast(`Smart Paste: Đã thêm/cập nhật ${filled + newCount} VĐV. Nhấn "Lưu Thành Tích" để lưu.`);
         }
     }
 </script>
