@@ -489,9 +489,18 @@
     window.onload = async function() {
         showLoading("Đang đồng bộ dữ liệu Public...");
         try {
-            let res = await fetch(`https://raw.githubusercontent.com/${GITHUB_REPO}/main/${GITHUB_FILE_PATH}?t=${Date.now()}`);
+            let token = localStorage.getItem('ghToken');
+            let headers = {};
+            if (token) headers['Authorization'] = `token ${token}`;
+
+            // Sử dụng GitHub API thay vì raw để không bị cache (luôn lấy dữ liệu mới nhất tức thì)
+            let res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE_PATH}?t=${Date.now()}`, { headers });
+            
             if (res.ok) {
-                let saved = await res.json();
+                let fileData = await res.json();
+                let contentStr = decodeURIComponent(escape(atob(fileData.content)));
+                let saved = JSON.parse(contentStr);
+                
                 db = {
                     teams: saved.teams || {},
                     classes: saved.classes || {},
@@ -504,6 +513,24 @@
                     }
                 };
                 localStorage.setItem('triathlonDB', JSON.stringify(db)); // backup
+            } else {
+                // Nếu API bị giới hạn (rate limit), thử fallback về raw
+                let rawRes = await fetch(`https://raw.githubusercontent.com/${GITHUB_REPO}/main/${GITHUB_FILE_PATH}?t=${Date.now()}`);
+                if (rawRes.ok) {
+                    let saved = await rawRes.json();
+                    db = {
+                        teams: saved.teams || {},
+                        classes: saved.classes || {},
+                        bonusColumns: saved.bonusColumns || ['Điểm Cộng'],
+                        sports: {
+                            run: (saved.sports && saved.sports.run) || {},
+                            bike: (saved.sports && saved.sports.bike) || {},
+                            swim: (saved.sports && saved.sports.swim) || {},
+                            bonus: (saved.sports && saved.sports.bonus) || {}
+                        }
+                    };
+                    localStorage.setItem('triathlonDB', JSON.stringify(db));
+                }
             }
         } catch (e) {
             console.error("Lỗi tải dữ liệu Public, dùng dữ liệu Local", e);
