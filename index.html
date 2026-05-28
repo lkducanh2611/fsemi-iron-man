@@ -801,11 +801,24 @@
     async function syncAllStrava() {
         saveStravaConfig(); // Tự động lưu những gì đang nhập trên UI
         let config = JSON.parse(localStorage.getItem('stravaConfig') || '{}');
+        
         if (!config.tournamentStart) {
-            alert("Vui lòng cấu hình 'Ngày Bắt Đầu Giải' ở phía trên để hệ thống tự chia tuần!");
+            let userDate = prompt("Vui lòng nhập Ngày Bắt Đầu Giải (Định dạng: Năm-Tháng-Ngày, VD: 2026-05-01):");
+            if (userDate) {
+                document.getElementById('strava-tournament-start').value = userDate;
+                saveStravaConfig();
+                config = JSON.parse(localStorage.getItem('stravaConfig') || '{}');
+            } else {
+                alert("Bạn phải cung cấp Ngày Bắt Đầu Giải để đồng bộ!");
+                return;
+            }
+        }
+        
+        let tourStart = new Date(config.tournamentStart);
+        if (isNaN(tourStart.getTime())) {
+            alert("Ngày Bắt Đầu Giải không hợp lệ! Vui lòng kiểm tra lại (Nên chọn bằng lịch biểu tượng nhỏ trong ô).");
             return;
         }
-        let tourStart = new Date(config.tournamentStart);
         tourStart.setHours(0, 0, 0, 0);
 
         let sportClubMap = {
