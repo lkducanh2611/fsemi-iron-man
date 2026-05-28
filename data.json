@@ -149,7 +149,7 @@
     "Ducnm117": "D"
   },
   "bonusColumns": [
-    "Ði?m C?ng"
+    "Cộng leader"
   ],
   "sports": {
     "run": {
@@ -232,22 +232,22 @@
     "bonus": {
       "week1": {
         "cuong nguyen": {
-          "Ði?m C?ng": 80
+          "Cộng leader": 80
         },
         "Hai Le": {
-          "Ði?m C?ng": 100
+          "Cộng leader": 100
         },
         "Thu Hường": {
-          "Ði?m C?ng": 90
+          "Cộng leader": 90
         },
         "Chiến Nguyễn Văn": {
-          "Ði?m C?ng": 70
+          "Cộng leader": 70
         },
         "Phuc Vuong Xuan": {
-          "Ði?m C?ng": 60
+          "Cộng leader": 60
         },
         "Hiếu Lê Đình Minh": {
-          "Ði?m C?ng": 49.99
+          "Cộng leader": 49.99
         }
       },
       "week2": {},
