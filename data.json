@@ -227,7 +227,26 @@
       "week8": {}
     },
     "bonus": {
-      "week1": {},
+      "week1": {
+        "cuong nguyen": {
+          "Ði?m C?ng": 80
+        },
+        "Hai Le": {
+          "Ði?m C?ng": 100
+        },
+        "Thu Hường": {
+          "Ði?m C?ng": 90
+        },
+        "Chiến Nguyễn Văn": {
+          "Ði?m C?ng": 70
+        },
+        "Phuc Vuong Xuan": {
+          "Ði?m C?ng": 60
+        },
+        "Hiếu Lê Đình Minh": {
+          "Ði?m C?ng": 49.99
+        }
+      },
       "week2": {},
       "week3": {},
       "week4": {},
