@@ -1,1 +1,196 @@
-{"teams":{},"classes":{},"bonusColumns":["�i?m C?ng"],"sports":{"run":{},"bike":{},"swim":{},"bonus":{}}}
+{
+  "teams": {
+    "Team Ever Give Up": [
+      "cuong nguyen",
+      "Tracy Le",
+      "Hoa Hung Nguyen",
+      "lancth",
+      "Liinh Cute",
+      "Mui Phan",
+      "Tú Cẩm"
+    ],
+    "Team Bơi như tó": [
+      "Hai Le",
+      "Tran Diep",
+      "Huyền Bùi Thanh",
+      "Quỳnh Lê",
+      "Vân Nguyễn"
+    ],
+    "Team Dẻo Dai": [
+      "Thu Hường",
+      "Duy Đăng Lương",
+      "Minh Mơ Mộng",
+      "Ngoc Dang",
+      "BinhNT142",
+      "Yến Giang",
+      "CuongLD7"
+    ],
+    "Team Lộn Xộn": [
+      "Chiến Nguyễn Văn",
+      "Dũng Đặng Quang",
+      "Ngà Vũ Bích",
+      "Long Trần",
+      "Phương Nguyễn Quang",
+      "Thành Phan văn",
+      "Mỹ Linh Hoang"
+    ],
+    "Team Đầu gối Burn-in": [
+      "Phuc Vuong Xuan",
+      "Nguyen Vinh Ha",
+      "Ho Chi Cong",
+      "Quang Lê minh",
+      "Tho Nguyen - V",
+      "Minh Hoàng",
+      "Trang Nguyen",
+      "Chính Nguyến Thanh"
+    ],
+    "Team T5": [
+      "Hải Nguyễn",
+      "Hải Vũ",
+      "Tuấn Nguyễn",
+      "Sỹ Long",
+      "Lê Kiều Đức Anh",
+      "Trúc Nguyễn",
+      "Dương Bình Cương",
+      "Nguyen Ba Khanh Thien"
+    ],
+    "Team Già Gân": [
+      "Hiếu Lê Đình Minh",
+      "Nguyen Vinh Quang",
+      "Hữu Hùng Lâm",
+      "Nguyen Tien Dat",
+      "Cường Cao",
+      "minh tri nguyen",
+      "ThuVTA7"
+    ],
+    "Team hehe": [
+      "Đỗ Hoài",
+      "Võ Nguyễn Quang Huy",
+      "dongdv14",
+      "Khiêm Ngô Tri",
+      "thanhnc42",
+      "luanpv8",
+      "HienPK1",
+      "Phuc Bui"
+    ],
+    "Team hjhj": [
+      "Mai Văn Khải",
+      "Sáng Trần",
+      "Bien Nguyen Xuan",
+      "Trường Athlete",
+      "Mai Dao Thanh",
+      "ThuDNT",
+      "Ducnm117"
+    ]
+  },
+  "classes": {
+    "cuong nguyen": "A",
+    "Tracy Le": "C",
+    "Hoa Hung Nguyen": "B",
+    "lancth": "D",
+    "Liinh Cute": "D",
+    "Mui Phan": "C",
+    "Tú Cẩm": "D",
+    "Hai Le": "B",
+    "Tran Diep": "A",
+    "Huyền Bùi Thanh": "B",
+    "Quỳnh Lê": "A",
+    "Vân Nguyễn": "D",
+    "Thu Hường": "D",
+    "Duy Đăng Lương": "D",
+    "Minh Mơ Mộng": "A",
+    "Ngoc Dang": "D",
+    "BinhNT142": "C",
+    "Yến Giang": "C",
+    "CuongLD7": "B",
+    "Chiến Nguyễn Văn": "A",
+    "Dũng Đặng Quang": "C",
+    "Ngà Vũ Bích": "D",
+    "Long Trần": "D",
+    "Phương Nguyễn Quang": "A",
+    "Thành Phan văn": "C",
+    "Mỹ Linh Hoang": "D",
+    "Phuc Vuong Xuan": "B",
+    "Nguyen Vinh Ha": "D",
+    "Ho Chi Cong": "C",
+    "Quang Lê minh": "C",
+    "Minh Hoàng": "C",
+    "Trang Nguyen": "D",
+    "Chính Nguyến Thanh": "D",
+    "Hải Nguyễn": "C",
+    "Hải Vũ": "C",
+    "Tuấn Nguyễn": "D",
+    "Sỹ Long": "B",
+    "Lê Kiều Đức Anh": "D",
+    "Trúc Nguyễn": "D",
+    "Dương Bình Cương": "B",
+    "Nguyen Ba Khanh Thien": "C",
+    "Hiếu Lê Đình Minh": "B",
+    "Nguyen Vinh Quang": "B",
+    "Hữu Hùng Lâm": "C",
+    "Nguyen Tien Dat": "B",
+    "Cường Cao": "C",
+    "minh tri nguyen": "C",
+    "ThuVTA7": "D",
+    "Đỗ Hoài": "C",
+    "Võ Nguyễn Quang Huy": "D",
+    "dongdv14": "D",
+    "Khiêm Ngô Tri": "A",
+    "thanhnc42": "D",
+    "luanpv8": "C",
+    "HienPK1": "B",
+    "Phuc Bui": "D",
+    "Mai Văn Khải": "B",
+    "Sáng Trần": "D",
+    "Bien Nguyen Xuan": "C",
+    "Trường Athlete": "B",
+    "Mai Dao Thanh": "A",
+    "ThuDNT": "D",
+    "Ducnm117": "D"
+  },
+  "bonusColumns": [
+    "Ði?m C?ng"
+  ],
+  "sports": {
+    "run": {
+      "week1": {},
+      "week2": {},
+      "week3": {},
+      "week4": {},
+      "week5": {},
+      "week6": {},
+      "week7": {},
+      "week8": {}
+    },
+    "bike": {
+      "week1": {},
+      "week2": {},
+      "week3": {},
+      "week4": {},
+      "week5": {},
+      "week6": {},
+      "week7": {},
+      "week8": {}
+    },
+    "swim": {
+      "week1": {},
+      "week2": {},
+      "week3": {},
+      "week4": {},
+      "week5": {},
+      "week6": {},
+      "week7": {},
+      "week8": {}
+    },
+    "bonus": {
+      "week1": {},
+      "week2": {},
+      "week3": {},
+      "week4": {},
+      "week5": {},
+      "week6": {},
+      "week7": {},
+      "week8": {}
+    }
+  }
+}
