@@ -4,7 +4,7 @@
       "cuong nguyen",
       "Tracy Le",
       "Hoa Hung Nguyen",
-      "lancth",
+      "Lan Hoàng",
       "Liinh Cute",
       "Mui Phan",
       "Tú Cẩm"
@@ -87,7 +87,7 @@
     "cuong nguyen": "A",
     "Tracy Le": "C",
     "Hoa Hung Nguyen": "B",
-    "lancth": "D",
+    "Lan Hoàng": "D",
     "Liinh Cute": "D",
     "Mui Phan": "C",
     "Tú Cẩm": "D",
@@ -260,5 +260,6 @@
       "week7": {},
       "week8": {}
     }
-  }
+  },
+  "processedStravaIds": {}
 }
