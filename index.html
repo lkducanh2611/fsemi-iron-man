@@ -357,6 +357,12 @@
         renderTeamInput();
         renderScoreTable();
         updateLeaderboard();
+        
+        // Gắn sự kiện paste thông minh cho vùng bảng
+        let container = document.getElementById('score-table-container');
+        if(container) {
+            container.addEventListener('paste', handleTablePaste);
+        }
     }
 
     // Toast thông báo
@@ -534,34 +540,30 @@
         let isCSV = fileName.endsWith('.csv');
 
         if(isCSV) {
-            // Đọc CSV: thử UTF-8 trước
+            // Đọc CSV: dùng TextDecoder để nhận diện chuẩn xác mã hóa
             let reader = new FileReader();
             reader.onload = function(e) {
-                let csvText = e.target.result;
-                // Nếu text bị lỗi unicode (ký tự ) thì đọc lại bằng windows-1258 (Excel VN ANSI)
-                if (csvText.includes('')) {
-                    let reader1258 = new FileReader();
-                    reader1258.onload = function(e1258) {
-                        try {
-                            let workbook = XLSX.read(e1258.target.result, { type: 'string', raw: true });
-                            processWorkbook(workbook);
-                        } catch(err) {
-                            showToast('Lỗi đọc file CSV!');
-                            console.error(err);
-                        }
-                    };
-                    reader1258.readAsText(file, 'windows-1258');
-                } else {
-                    try {
-                        let workbook = XLSX.read(csvText, { type: 'string', raw: true });
-                        processWorkbook(workbook);
-                    } catch(err) {
-                        showToast('Lỗi đọc file CSV!');
-                        console.error(err);
-                    }
+                let buffer = e.target.result;
+                let text = '';
+                try {
+                    // Thử đọc theo UTF-8, fatal=true để bắt lỗi nếu có ký tự lạ
+                    let utf8Decoder = new TextDecoder('utf-8', { fatal: true });
+                    text = utf8Decoder.decode(buffer);
+                } catch(err) {
+                    // Nếu lỗi UTF-8 -> Dùng Windows-1258 (chuẩn Excel xuất CSV tiếng Việt)
+                    let ansiDecoder = new TextDecoder('windows-1258');
+                    text = ansiDecoder.decode(buffer);
+                }
+                
+                try {
+                    let workbook = XLSX.read(text, { type: 'string', raw: true });
+                    processWorkbook(workbook);
+                } catch(err) {
+                    showToast('Lỗi phân tích file CSV!');
+                    console.error(err);
                 }
             };
-            reader.readAsText(file, 'UTF-8');
+            reader.readAsArrayBuffer(file);
         } else {
             // Excel (.xlsx, .xls)
             let reader = new FileReader();
@@ -731,6 +733,85 @@
             </tr>`;
             tbody.innerHTML += tr;
         });
+    }
+
+    // Xử lý Smart Paste trực tiếp vào bảng
+    function handleTablePaste(event) {
+        let clipboardData = event.clipboardData || window.clipboardData;
+        let pastedData = clipboardData.getData('Text');
+        if (!pastedData) return;
+        
+        // Nếu chỉ paste text bình thường (không có xuống dòng, không có tab) thì để trình duyệt tự xử lý
+        if (!pastedData.includes('\n') && !pastedData.includes('\t')) {
+            return;
+        }
+
+        event.preventDefault();
+        
+        let lines = pastedData.split(/\r?\n/);
+        let pasteMap = {};
+        let order = [];
+        
+        for (let line of lines) {
+            if (!line.trim()) continue;
+            // Tách theo tab (copy từ Excel) hoặc dấu phẩy
+            let parts = line.includes('\t') ? line.split('\t') : line.split(',');
+            
+            let name = (parts[0] || '').trim();
+            let scoreStr = parts.length > 1 ? (parts[1] || '') : '';
+            // Lọc ra số
+            let score = parseFloat(scoreStr.replace(/[^\d.,]/g, '').replace(',', '.'));
+            
+            if (name) {
+                let key = name.toLowerCase();
+                pasteMap[key] = { name: name, score: !isNaN(score) ? score : '' };
+                order.push(key);
+            }
+        }
+        
+        if (order.length > 0) {
+            let tbody = document.querySelector('#score-table tbody');
+            if(!tbody) return;
+
+            let trs = tbody.querySelectorAll('tr');
+            let existingInputs = {};
+            
+            trs.forEach(tr => {
+                let nameInput = tr.querySelector('.input-name');
+                let scoreInput = tr.querySelector('.input-score');
+                if (nameInput && nameInput.value.trim()) {
+                    existingInputs[nameInput.value.trim().toLowerCase()] = scoreInput;
+                }
+            });
+            
+            let filled = 0;
+            let newCount = 0;
+            
+            for(let key of order) {
+                let row = pasteMap[key];
+                if (existingInputs[key]) {
+                    // Cập nhật thành tích cho người đã có
+                    existingInputs[key].value = row.score;
+                    filled++;
+                } else {
+                    // Tạo dòng mới
+                    let rowCount = tbody.rows.length;
+                    let tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="stt">${rowCount + 1}</td>
+                        <td><input type="text" class="input-name" placeholder="Nhập tên VĐV..."></td>
+                        <td><input type="number" class="input-score" placeholder="0.0" step="0.01" min="0"></td>
+                        <td style="text-align:center;"><button class="btn-remove" onclick="removeRow(this)">✕</button></td>
+                    `;
+                    tr.querySelector('.input-name').value = row.name;
+                    tr.querySelector('.input-score').value = row.score;
+                    tbody.appendChild(tr);
+                    existingInputs[key] = tr.querySelector('.input-score'); // Lưu lại để khỏi trùng lặp
+                    newCount++;
+                }
+            }
+            showToast(`Smart Paste: Cập nhật ${filled} VĐV, thêm mới ${newCount} VĐV. Nhấn "Lưu Thành Tích" để lưu.`);
+        }
     }
 </script>
 
