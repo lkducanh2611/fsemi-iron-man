@@ -879,11 +879,14 @@
             }
         }
 
-        let cols = currentSport === 'bonus' ? db.bonusColumns : ['Thành Tích (km)'];
+        let cols = currentSport === 'bonus' ? db.bonusColumns : ['Thành Tích (km)', 'Phát Sinh'];
 
         let rowData = [];
         displayNames.forEach((name) => {
             let val = sportData[name] !== undefined ? sportData[name] : (currentSport === 'bonus' ? {} : '');
+            if (currentSport !== 'bonus' && typeof val === 'number') {
+                val = { 'Thành Tích (km)': val };
+            }
             rowData.push({name, val});
         });
 
@@ -893,11 +896,15 @@
             rowData.sort((a, b) => {
                 let scoreA = 0;
                 let scoreB = 0;
-                if (currentSport === 'bonus') {
+                if (typeof a.val === 'object' && a.val !== null) {
                     for (let k in a.val) scoreA += a.val[k] || 0;
-                    for (let k in b.val) scoreB += b.val[k] || 0;
                 } else {
                     scoreA = parseFloat(a.val) || 0;
+                }
+                
+                if (typeof b.val === 'object' && b.val !== null) {
+                    for (let k in b.val) scoreB += b.val[k] || 0;
+                } else {
                     scoreB = parseFloat(b.val) || 0;
                 }
                 
@@ -938,14 +945,15 @@
         trs.forEach((tr, idx) => {
             tr.querySelector('.input-name').value = rowData[idx].name;
             let scoreInputs = tr.querySelectorAll('.input-score');
-            if (currentSport === 'bonus') {
-                cols.forEach((colName, cIdx) => {
-                    let v = rowData[idx].val && rowData[idx].val[colName] !== undefined ? rowData[idx].val[colName] : '';
-                    if (scoreInputs[cIdx]) scoreInputs[cIdx].value = v;
-                });
-            } else {
-                if (scoreInputs[0]) scoreInputs[0].value = rowData[idx].val;
-            }
+            cols.forEach((colName, cIdx) => {
+                let v = '';
+                if (typeof rowData[idx].val === 'object' && rowData[idx].val !== null) {
+                    v = rowData[idx].val[colName] !== undefined ? rowData[idx].val[colName] : '';
+                } else if (typeof rowData[idx].val === 'number' && cIdx === 0) {
+                    v = rowData[idx].val;
+                }
+                if (scoreInputs[cIdx]) scoreInputs[cIdx].value = v;
+            });
         });
     }
 
@@ -983,7 +991,7 @@
                 <input type="text" class="input-name" placeholder="Nhập tên VĐV...">
             </td>`;
         for(let i=0; i<colCount; i++) {
-            html += `<td><input type="number" class="input-score" placeholder="0.0" step="0.01" min="0"></td>`;
+            html += `<td><input type="number" class="input-score" placeholder="0.0" step="0.01"></td>`;
         }
         html += `</tr>`;
         return html;
@@ -1180,7 +1188,7 @@
             let score = parseFloat(scoreStr);
             let val = !isNaN(score) ? score : '';
             
-            tableHTML += buildRowHTML();
+            tableHTML += buildRowHTML(cols.length);
             rowData.push({name, val});
             count++;
         }
@@ -1315,26 +1323,19 @@
             if(nameInput && scoreInputs.length > 0) {
                 let name = nameInput.value.trim();
                 if(name) {
-                    if (currentSport === 'bonus') {
-                        let obj = {};
-                        let hasVal = false;
-                        cols.forEach((colName, idx) => {
-                            if (scoreInputs[idx]) {
-                                let val = parseFloat(scoreInputs[idx].value);
-                                if (!isNaN(val) && val > 0) {
-                                    obj[colName] = val;
-                                    hasVal = true;
-                                }
+                    let obj = {};
+                    let hasVal = false;
+                    cols.forEach((colName, idx) => {
+                        if (scoreInputs[idx]) {
+                            let val = parseFloat(scoreInputs[idx].value);
+                            if (!isNaN(val) && val !== 0) {
+                                obj[colName] = val;
+                                hasVal = true;
                             }
-                        });
-                        if (hasVal) {
-                            db.sports[currentSport][week][name] = obj;
                         }
-                    } else {
-                        let val = parseFloat(scoreInputs[0].value);
-                        if (!isNaN(val) && val > 0) {
-                            db.sports[currentSport][week][name] = val;
-                        }
+                    });
+                    if (hasVal) {
+                        db.sports[currentSport][week][name] = obj;
                     }
                 }
             }
@@ -1495,12 +1496,12 @@
                     }
                     
                     let addAmount = 0;
-                    if (sport === 'bonus') {
+                    if (typeof val === 'object' && val !== null) {
                         for(let k in val) {
                             addAmount += val[k];
                         }
                     } else {
-                        addAmount = val;
+                        addAmount = parseFloat(val) || 0;
                     }
 
                     individualStats[name][sport] += addAmount;
