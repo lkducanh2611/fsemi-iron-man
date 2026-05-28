@@ -291,16 +291,24 @@
         <p style="text-align: center; font-size: 14px; color: #666;">Công thức: (Chạy x 2.5) + (Đạp x 1) + (Bơi x 20) + (Tổng Bonus) + (Streak)</p>
         
         <div class="filter-row" style="justify-content: space-between; margin-bottom: 15px;">
-            <div>
-                <label style="font-weight:bold;">Sắp xếp theo:</label>
-                <select id="ind-sport-filter" onchange="updateLeaderboard()">
-                    <option value="total">Tổng Điểm</option>
-                    <option value="run">Thành tích Chạy (km)</option>
-                    <option value="bike">Thành tích Đạp (km)</option>
-                    <option value="swim">Thành tích Bơi (km)</option>
-                    <option value="bonus">Điểm Bonus</option>
-                    <option value="streak">Điểm Streak</option>
-                </select>
+            <div style="display: flex; gap: 15px;">
+                <div>
+                    <label style="font-weight:bold;">Sắp xếp theo:</label>
+                    <select id="ind-sport-filter" onchange="updateLeaderboard()">
+                        <option value="total">Tổng Điểm</option>
+                        <option value="run">Thành tích Chạy (km)</option>
+                        <option value="bike">Thành tích Đạp (km)</option>
+                        <option value="swim">Thành tích Bơi (km)</option>
+                        <option value="bonus">Điểm Bonus</option>
+                        <option value="streak">Điểm Streak</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-weight:bold;">Đội:</label>
+                    <select id="ind-team-filter" onchange="updateLeaderboard()">
+                        <option value="all">-- Tất cả --</option>
+                    </select>
+                </div>
             </div>
             <button onclick="exportIndividualLeaderboard()" style="background: #27ae60; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">📥 Xuất Excel</button>
         </div>
@@ -814,17 +822,33 @@
     // Cập nhật dropdown chọn Đội
     function updateTeamFilter() {
         let select = document.getElementById('team-filter');
-        if (!select) return;
-        let oldVal = select.value;
-        select.innerHTML = '<option value="all">-- Tất cả --</option>';
-        for (const teamName of Object.keys(db.teams)) {
-            let opt = document.createElement('option');
-            opt.value = teamName;
-            opt.textContent = teamName;
-            select.appendChild(opt);
+        if (select) {
+            let oldVal = select.value;
+            select.innerHTML = '<option value="all">-- Tất cả --</option>';
+            for (const teamName of Object.keys(db.teams)) {
+                let opt = document.createElement('option');
+                opt.value = teamName;
+                opt.textContent = teamName;
+                select.appendChild(opt);
+            }
+            if (oldVal && Object.keys(db.teams).includes(oldVal)) {
+                select.value = oldVal;
+            }
         }
-        if (oldVal && Object.keys(db.teams).includes(oldVal)) {
-            select.value = oldVal;
+
+        let indSelect = document.getElementById('ind-team-filter');
+        if (indSelect) {
+            let oldInd = indSelect.value;
+            indSelect.innerHTML = '<option value="all">-- Tất cả --</option>';
+            for (const teamName of Object.keys(db.teams)) {
+                let opt = document.createElement('option');
+                opt.value = teamName;
+                opt.textContent = teamName;
+                indSelect.appendChild(opt);
+            }
+            if (oldInd && Object.keys(db.teams).includes(oldInd)) {
+                indSelect.value = oldInd;
+            }
         }
     }
 
@@ -1503,9 +1527,12 @@
         // Tính điểm Cá nhân (loại bỏ VĐV "Tự do")
         let indResults = [];
         let indSportFilter = document.getElementById('ind-sport-filter') ? document.getElementById('ind-sport-filter').value : 'total';
+        let indTeamFilter = document.getElementById('ind-team-filter') ? document.getElementById('ind-team-filter').value : 'all';
 
         for (const [iName, stat] of Object.entries(individualStats)) {
             if (stat.team === 'Tự do') continue; // Bỏ qua các VĐV ngoài danh sách khai báo
+            if (indTeamFilter !== 'all' && stat.team !== indTeamFilter) continue; // Lọc theo đội
+
             let score = (stat.run * 2.5) + (stat.bike * 1) + (stat.swim * 20) + stat.bonus + stat.streak;
             
             // Lọc bỏ những người không có thành tích ở hạng mục đang chọn
