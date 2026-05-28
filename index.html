@@ -759,8 +759,8 @@
         }
     }
 
-    // CORS Proxy - cần thiết vì Strava API không cho trình duyệt gọi trực tiếp
-    const CORS_PROXY = 'https://corsproxy.io/?';
+    // Sử dụng Vercel Serverless Functions làm proxy
+    const VERCEL_API = 'https://fsemi-iron-man.vercel.app/api';
 
     // Đọc cấu hình Strava từ DOM + localStorage (ưu tiên DOM nếu có)
     function getStravaConfig() {
@@ -781,7 +781,7 @@
         };
     }
 
-    // Lấy Access Token từ Refresh Token
+    // Lấy Access Token từ Refresh Token qua Vercel Proxy
     async function getStravaAccessToken() {
         const config = getStravaConfig();
         if (!config.clientId || !config.clientSecret || !config.refreshToken) {
@@ -791,18 +791,18 @@
             if (!config.refreshToken) missing.push('Refresh Token');
             throw new Error("Thiếu: " + missing.join(', ') + ". Vui lòng nhập đầy đủ ở phần Cấu hình Strava, bấm Lưu Cấu Hình, rồi thử lại.");
         }
-        let formData = new URLSearchParams();
-        formData.append('client_id', config.clientId);
-        formData.append('client_secret', config.clientSecret);
-        formData.append('grant_type', 'refresh_token');
-        formData.append('refresh_token', config.refreshToken);
 
-        let tokenUrl = CORS_PROXY + encodeURIComponent('https://www.strava.com/oauth/token');
+        let tokenUrl = VERCEL_API + '/strava-token';
         let res;
         try {
             res = await fetch(tokenUrl, {
                 method: 'POST',
-                body: formData
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    client_id: config.clientId,
+                    client_secret: config.clientSecret,
+                    refresh_token: config.refreshToken
+                })
             });
         } catch(networkErr) {
             throw new Error("Không thể kết nối tới Strava (lỗi mạng hoặc CORS). Chi tiết: " + networkErr.message);
@@ -896,7 +896,7 @@
                 let clubId = sportClubMap[sport];
                 if (!clubId) continue; // Bỏ qua nếu môn này chưa nhập ID
 
-                let clubUrl = CORS_PROXY + encodeURIComponent(`https://www.strava.com/api/v3/clubs/${clubId}/activities?per_page=200`);
+                let clubUrl = `${VERCEL_API}/strava-activities?clubId=${clubId}`;
                 let res;
                 try {
                     res = await fetch(clubUrl, {
