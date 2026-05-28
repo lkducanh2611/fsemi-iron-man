@@ -407,8 +407,8 @@
                         <input type="password" id="strava-refresh-token" placeholder="Mã refresh token..." style="width: 100%; padding: 6px; border: 1px solid #bdc3c7; border-radius: 4px;">
                     </div>
                     <div style="grid-column: 1 / -1;">
-                        <label>Ngày Bắt Đầu Giải (Tuần 1 bắt đầu từ ngày này):</label><br>
-                        <input type="date" id="strava-tournament-start" style="width: 100%; padding: 6px; border: 1px solid #bdc3c7; border-radius: 4px;">
+                        <label>Ngày Bắt Đầu Giải (Tuần 1 bắt đầu từ ngày này, VD: 2026-06-01):</label><br>
+                        <input type="text" id="strava-tournament-start" placeholder="VD: 2026-06-01" style="width: 100%; padding: 6px; border: 1px solid #bdc3c7; border-radius: 4px;">
                     </div>
                     <div>
                         <label>ID Group Chạy:</label><br>
@@ -738,18 +738,25 @@
     }
 
     function saveStravaConfig() {
+        let getVal = function(id) {
+            let el = document.getElementById(id);
+            return el ? el.value.trim() : '';
+        };
         let config = {
-            clientId: document.getElementById('strava-client-id').value.trim(),
-            clientSecret: document.getElementById('strava-client-secret').value.trim(),
-            refreshToken: document.getElementById('strava-refresh-token').value.trim(),
-            tournamentStart: document.getElementById('strava-tournament-start').value,
-            clubRun: document.getElementById('strava-club-run').value.trim(),
-            clubBike: document.getElementById('strava-club-bike').value.trim(),
-            clubSwim: document.getElementById('strava-club-swim').value.trim()
+            clientId: getVal('strava-client-id'),
+            clientSecret: getVal('strava-client-secret'),
+            refreshToken: getVal('strava-refresh-token'),
+            tournamentStart: getVal('strava-tournament-start'),
+            clubRun: getVal('strava-club-run'),
+            clubBike: getVal('strava-club-bike'),
+            clubSwim: getVal('strava-club-swim')
         };
         localStorage.setItem('stravaConfig', JSON.stringify(config));
-        document.getElementById('strava-status').innerText = "✅ Đã lưu cấu hình";
-        document.getElementById('strava-status').style.color = "green";
+        let statusEl = document.getElementById('strava-status');
+        if (statusEl) {
+            statusEl.innerText = "✅ Đã lưu cấu hình";
+            statusEl.style.color = "green";
+        }
     }
 
     // CORS Proxy - cần thiết vì Strava API không cho trình duyệt gọi trực tiếp
@@ -829,29 +836,22 @@
     }
 
     async function syncAllStrava() {
-        saveStravaConfig(); // Tự động lưu những gì đang nhập trên UI
+        saveStravaConfig();
         let config = JSON.parse(localStorage.getItem('stravaConfig') || '{}');
         
-        let rawDate = config.tournamentStart ? config.tournamentStart.trim() : "";
+        // Đọc ngày trực tiếp từ ô nhập trên giao diện (không phụ thuộc localStorage)
+        let dateEl = document.getElementById('strava-tournament-start');
+        let rawDate = (dateEl ? dateEl.value.trim() : '') || (config.tournamentStart || '').trim();
+        
+        if (!rawDate) {
+            alert('Bạn chưa nhập Ngày Bắt Đầu Giải! Vui lòng nhập vào ô ở phần Cấu hình Strava (VD: 2026-06-01) rồi bấm lại nút đồng bộ.');
+            return;
+        }
+        
         let validDateStr = normalizeDateString(rawDate);
-
-        // Nếu ngày trống hoặc sai định dạng, hỏi lại trực tiếp
         if (!validDateStr) {
-            let userDate = prompt(`Ngày Bắt Đầu Giải ${rawDate ? '['+rawDate+']' : ''} đang trống hoặc sai định dạng.\nVui lòng nhập ngày (VD: 2026-05-01 hoặc 01/05/2026):`);
-            if (userDate) {
-                validDateStr = normalizeDateString(userDate);
-                if (validDateStr) {
-                    // Cập nhật lại UI bằng chuỗi YYYY-MM-DD chuẩn để input type="date" không bị lỗi
-                    document.getElementById('strava-tournament-start').value = validDateStr;
-                    saveStravaConfig();
-                } else {
-                    alert("Ngày bạn gõ vẫn không hợp lệ. Đã hủy đồng bộ.");
-                    return;
-                }
-            } else {
-                alert("Bạn phải cung cấp Ngày Bắt Đầu Giải để đồng bộ!");
-                return;
-            }
+            alert('Ngày "' + rawDate + '" không hợp lệ. Vui lòng nhập theo định dạng: 2026-06-01 (Năm-Tháng-Ngày)');
+            return;
         }
         
         let tourStart = new Date(validDateStr);
