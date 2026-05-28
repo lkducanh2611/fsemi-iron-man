@@ -178,7 +178,48 @@
             overflow-x: auto;
             margin-top: 10px;
         }
+
+        /* Upload Excel */
+        .upload-section {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: #f0f7ff;
+            border: 2px dashed #103f91;
+            border-radius: 8px;
+            text-align: center;
+            transition: 0.3s;
+        }
+        .upload-section:hover {
+            background: #e0efff;
+            border-color: #f26522;
+        }
+        .upload-section label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            color: var(--secondary);
+            font-size: 15px;
+        }
+        .upload-section input[type="file"] {
+            display: none;
+        }
+        .upload-section .upload-icon {
+            font-size: 24px;
+        }
+        .upload-section .note {
+            margin-top: 8px;
+            font-size: 12px;
+        }
+        .upload-filename {
+            margin-top: 8px;
+            font-size: 13px;
+            color: #27ae60;
+            font-weight: 600;
+        }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
 
@@ -255,7 +296,18 @@
                     </select>
                 </div>
 
-                <!-- Bảng nhập điểm - hiển thị TẤT CẢ VĐV, nhóm theo đội -->
+                <!-- Upload Excel -->
+                <div class="upload-section" id="upload-section">
+                    <label for="excel-upload">
+                        <span class="upload-icon">📁</span>
+                        Chọn file Excel để nhập thành tích
+                    </label>
+                    <input type="file" id="excel-upload" accept=".xlsx,.xls,.csv" onchange="handleExcelUpload(event)">
+                    <div class="note">File Excel gồm 2 cột: <strong>Tên</strong> và <strong>Thành Tích (km)</strong>. Hỗ trợ .xlsx, .xls, .csv</div>
+                    <div class="upload-filename" id="upload-filename"></div>
+                </div>
+
+                <!-- Bảng nhập điểm -->
                 <div class="table-scroll-wrapper" id="score-table-container">
                 </div>
 
@@ -481,6 +533,79 @@
         rows.forEach((row, idx) => {
             row.querySelector('.stt').textContent = idx + 1;
         });
+    }
+
+    // Xử lý upload file Excel
+    function handleExcelUpload(event) {
+        let file = event.target.files[0];
+        if(!file) return;
+
+        // Hiển thị tên file
+        document.getElementById('upload-filename').textContent = '📄 ' + file.name;
+
+        let reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                let data = new Uint8Array(e.target.result);
+                let workbook = XLSX.read(data, { type: 'array' });
+                
+                // Đọc sheet đầu tiên
+                let sheetName = workbook.SheetNames[0];
+                let sheet = workbook.Sheets[sheetName];
+                let rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+                if(rows.length === 0) {
+                    showToast('File Excel trống!');
+                    return;
+                }
+
+                // Bỏ dòng header nếu có (kiểm tra dòng đầu có phải số không)
+                let startIdx = 0;
+                if(rows.length > 1 && isNaN(parseFloat(rows[0][1]))) {
+                    startIdx = 1; // Bỏ qua header
+                }
+
+                // Xóa bảng cũ và tạo bảng mới từ dữ liệu Excel
+                let container = document.getElementById('score-table-container');
+                let html = `<table class="score-table" id="score-table">
+                    <thead>
+                        <tr>
+                            <th style="width:35px">STT</th>
+                            <th style="text-align:left; padding-left:8px;">Tên VĐV</th>
+                            <th style="width:140px">Thành Tích (km)</th>
+                            <th style="width:40px"></th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+
+                let count = 0;
+                for(let i = startIdx; i < rows.length; i++) {
+                    let row = rows[i];
+                    if(!row || row.length < 2) continue;
+                    
+                    let name = (row[0] || '').toString().trim();
+                    let score = parseFloat(row[1]);
+                    
+                    if(!name) continue;
+                    
+                    let val = !isNaN(score) ? score : '';
+                    html += buildRow(count, name, val);
+                    count++;
+                }
+
+                html += `</tbody></table>`;
+                container.innerHTML = html;
+
+                showToast(`Đã nhập ${count} VĐV từ file Excel. Nhấn "Lưu Thành Tích" để lưu.`);
+            } catch(err) {
+                showToast('Lỗi đọc file Excel! Kiểm tra lại định dạng.');
+                console.error(err);
+            }
+        };
+        reader.readAsArrayBuffer(file);
+
+        // Reset input để có thể chọn lại cùng file
+        event.target.value = '';
     }
 
     // Lưu dữ liệu điểm từ bảng ô
