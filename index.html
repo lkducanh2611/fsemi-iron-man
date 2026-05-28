@@ -33,31 +33,111 @@
         .rank-3 { font-weight: bold; color: #cd7f32; font-size: 1.1em;}
 
         /* Form Nhập Liệu */
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
-        .tabs button { padding: 10px 20px; border: 1px solid #ddd; background: #eee; cursor: pointer; border-radius: 5px; }
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .tabs button { padding: 10px 20px; border: 1px solid #ddd; background: #eee; cursor: pointer; border-radius: 5px; font-size: 14px; font-weight: 600; transition: 0.3s; }
         .tabs button.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .tabs button:hover { background: #ddd; }
+        .tabs button.active:hover { background: #d1551a; }
         
         .form-group { margin-bottom: 20px; }
         label { display: block; font-weight: bold; margin-bottom: 8px; }
         textarea { width: 100%; height: 200px; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-family: monospace; resize: vertical; box-sizing: border-box; }
-        select { padding: 10px; border-radius: 5px; border: 1px solid #ccc; margin-bottom: 10px; width: 100%; font-size: 16px;}
+        select { padding: 10px; border-radius: 5px; border: 1px solid #ccc; margin-bottom: 10px; width: 100%; font-size: 16px; }
         .btn-save { background-color: var(--primary); color: white; border: none; padding: 12px 25px; font-size: 16px; border-radius: 5px; cursor: pointer; transition: 0.3s; font-weight: bold; }
         .btn-save:hover { background-color: #d1551a; }
         .note { font-size: 0.9em; color: #666; font-style: italic; margin-bottom: 10px; }
         
         .admin-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
         @media (max-width: 768px) { .admin-grid { grid-template-columns: 1fr; } }
+
+        /* Bảng nhập điểm dạng ô */
+        .score-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .score-table th { background-color: var(--secondary); color: white; padding: 10px 12px; font-size: 14px; }
+        .score-table td { padding: 6px 8px; border: 1px solid #ddd; }
+        .score-table tr:hover { background-color: #f9f9f9; }
+        .score-table .member-name { 
+            font-weight: 600; 
+            color: var(--secondary); 
+            text-align: left; 
+            padding-left: 12px;
+            background-color: #f8f9fa;
+            min-width: 180px;
+        }
+        .score-table input[type="number"] {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+            text-align: center;
+            transition: border-color 0.3s;
+        }
+        .score-table input[type="number"]:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(242, 101, 34, 0.2);
+        }
+        .score-table input[type="number"]::placeholder {
+            color: #bbb;
+        }
+
+        /* Filter chọn đội */
+        .filter-row { display: flex; gap: 15px; align-items: end; flex-wrap: wrap; margin-bottom: 15px; }
+        .filter-row .form-group { margin-bottom: 0; flex: 1; min-width: 180px; }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+            font-style: italic;
+        }
+        .empty-state svg { margin-bottom: 10px; }
+
+        /* Thông báo toast thay alert */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #27ae60;
+            color: white;
+            padding: 14px 24px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 9999;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: opacity 0.3s, transform 0.3s;
+            pointer-events: none;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Số thứ tự */
+        .score-table .stt {
+            width: 40px;
+            text-align: center;
+            color: #999;
+            font-size: 13px;
+            background-color: #f8f9fa;
+        }
     </style>
 </head>
 <body>
+
+<div class="toast" id="toast-msg">✅ Đã lưu dữ liệu thành công!</div>
 
 <header>
     <h2>Giải Thể Thao 3 Môn Phối Hợp</h2>
 </header>
 
 <nav>
-    <button class="nav-btn active" onclick="switchPage('leaderboard')">Bảng Xếp Hạng</button>
-    <button class="nav-btn" onclick="switchPage('admin')">Nhập Điểm (Admin)</button>
+    <button class="nav-btn active" onclick="switchPage('leaderboard', this)">Bảng Xếp Hạng</button>
+    <button class="nav-btn" onclick="switchPage('admin', this)">Nhập Điểm (Admin)</button>
 </nav>
 
 <div class="container">
@@ -97,34 +177,47 @@
                 <button class="btn-save" onclick="saveTeams()" style="width: 100%; margin-top: 10px;">Lưu Danh Sách Nhóm</button>
             </div>
 
-            <!-- Cột phải: Nhập thành tích -->
+            <!-- Cột phải: Nhập thành tích bằng bảng -->
             <div class="score-setup">
                 <h3 style="color: var(--secondary);">2. Nhập Thành Tích</h3>
+
+                <!-- Tabs chọn môn -->
                 <div class="tabs">
-                    <button class="tab-btn active" onclick="switchSport('run', this)">Chạy Bộ (x2.5)</button>
-                    <button class="tab-btn" onclick="switchSport('bike', this)">Đạp Xe (x1)</button>
-                    <button class="tab-btn" onclick="switchSport('swim', this)">Bơi Lội (x20)</button>
+                    <button class="tab-btn active" onclick="switchSport('run', this)">🏃 Chạy Bộ (x2.5)</button>
+                    <button class="tab-btn" onclick="switchSport('bike', this)">🚴 Đạp Xe (x1)</button>
+                    <button class="tab-btn" onclick="switchSport('swim', this)">🏊 Bơi Lội (x20)</button>
                 </div>
                 
-                <div class="form-group">
-                    <label>Chọn Tuần Nhập Liệu:</label>
-                    <select id="week-select" onchange="loadSportData()">
-                        <option value="week1">Tuần 1</option>
-                        <option value="week2">Tuần 2</option>
-                        <option value="week3">Tuần 3</option>
-                        <option value="week4">Tuần 4</option>
-                        <option value="week5">Tuần 5</option>
-                        <option value="week6">Tuần 6</option>
-                    </select>
+                <!-- Filter: Chọn đội + Chọn tuần -->
+                <div class="filter-row">
+                    <div class="form-group">
+                        <label>Chọn Đội:</label>
+                        <select id="team-select" onchange="renderScoreTable()">
+                            <option value="">-- Chọn đội --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Chọn Tuần:</label>
+                        <select id="week-select" onchange="renderScoreTable()">
+                            <option value="week1">Tuần 1</option>
+                            <option value="week2">Tuần 2</option>
+                            <option value="week3">Tuần 3</option>
+                            <option value="week4">Tuần 4</option>
+                            <option value="week5">Tuần 5</option>
+                            <option value="week6">Tuần 6</option>
+                        </select>
+                    </div>
                 </div>
 
-                <div class="form-group">
-                    <label>Dữ liệu (Tên | Số km):</label>
-                    <div class="note">Ví dụ: Tran Diep | 31.0 km</div>
-                    <textarea id="score-input" placeholder="Paste dữ liệu từ excel vào đây..."></textarea>
+                <!-- Bảng nhập điểm -->
+                <div id="score-table-container">
+                    <div class="empty-state">
+                        <svg width="48" height="48" fill="none" stroke="#ccc" stroke-width="1.5" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        <p>Vui lòng chọn đội để nhập thành tích</p>
+                    </div>
                 </div>
                 
-                <button class="btn-save" onclick="saveSportData()">Lưu Thành Tích Bảng Này</button>
+                <button class="btn-save" onclick="saveSportData()" style="width: 100%; margin-top: 15px;" id="btn-save-score">Lưu Thành Tích</button>
             </div>
         </div>
     </div>
@@ -149,24 +242,36 @@
             db = JSON.parse(localStorage.getItem('triathlonDB'));
         }
         renderTeamInput();
-        loadSportData();
+        populateTeamSelect();
+        renderScoreTable();
         updateLeaderboard();
+    }
+
+    // Hiển thị toast thông báo (thay alert)
+    function showToast(msg) {
+        let toast = document.getElementById('toast-msg');
+        toast.textContent = '✅ ' + msg;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2500);
     }
 
     // Lưu DB vào LocalStorage
     function saveDB() {
         localStorage.setItem('triathlonDB', JSON.stringify(db));
         updateLeaderboard();
-        alert("Đã lưu dữ liệu thành công!");
     }
 
     // Chuyển trang (Bảng xếp hạng / Admin)
-    function switchPage(pageId) {
+    function switchPage(pageId, btn) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
         document.getElementById(pageId).classList.add('active');
-        event.target.classList.add('active');
+        btn.classList.add('active');
         if(pageId === 'leaderboard') updateLeaderboard();
+        if(pageId === 'admin') {
+            populateTeamSelect();
+            renderScoreTable();
+        }
     }
 
     // Chuyển tab Môn thi đấu
@@ -174,7 +279,7 @@
         currentSport = sport;
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        loadSportData();
+        renderScoreTable();
     }
 
     // Lưu danh sách team từ text area
@@ -192,6 +297,9 @@
             }
         });
         saveDB();
+        populateTeamSelect();
+        renderScoreTable();
+        showToast('Đã lưu danh sách nhóm!');
     }
 
     // Hiển thị lại danh sách team đã lưu ra text area
@@ -203,39 +311,103 @@
         document.getElementById('team-input').value = text.trim();
     }
 
-    // Đọc dữ liệu của môn và tuần hiện tại đưa vào textarea
-    function loadSportData() {
-        let week = document.getElementById('week-select').value;
-        let data = db.sports[currentSport][week] || {};
-        let text = "";
-        for (const [name, distance] of Object.entries(data)) {
-            text += `${name} | ${distance} km\n`;
+    // Cập nhật dropdown chọn đội
+    function populateTeamSelect() {
+        let select = document.getElementById('team-select');
+        let currentValue = select.value;
+        select.innerHTML = '<option value="">-- Chọn đội --</option>';
+        for (const teamName of Object.keys(db.teams)) {
+            let opt = document.createElement('option');
+            opt.value = teamName;
+            opt.textContent = teamName;
+            select.appendChild(opt);
         }
-        document.getElementById('score-input').value = text.trim();
+        // Giữ lại lựa chọn trước đó nếu đội vẫn tồn tại
+        if(db.teams[currentValue]) {
+            select.value = currentValue;
+        }
     }
 
-    // Lưu dữ liệu điểm từ textarea
-    function saveSportData() {
+    // Render bảng nhập điểm theo đội + tuần + môn được chọn
+    function renderScoreTable() {
+        let container = document.getElementById('score-table-container');
+        let teamName = document.getElementById('team-select').value;
         let week = document.getElementById('week-select').value;
-        let text = document.getElementById('score-input').value;
-        let lines = text.split('\n').map(l => l.trim()).filter(l => l !== '');
-        
-        let newData = {};
-        lines.forEach(line => {
-            if(line.includes('|')) {
-                let parts = line.split('|');
-                let name = parts[0].trim();
-                // Lọc bỏ các chữ cái, chỉ giữ lại số và dấu chấm thập phân
-                let distanceStr = parts[1].replace(/[^\d.]/g, '').trim(); 
-                let distance = parseFloat(distanceStr);
-                if(!isNaN(distance)) {
-                    newData[name] = distance;
-                }
+
+        if(!teamName || !db.teams[teamName]) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <svg width="48" height="48" fill="none" stroke="#ccc" stroke-width="1.5" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    <p>Vui lòng chọn đội để nhập thành tích</p>
+                </div>`;
+            return;
+        }
+
+        let members = db.teams[teamName];
+        let sportData = db.sports[currentSport][week] || {};
+        let sportLabel = currentSport === 'run' ? 'Chạy Bộ' : (currentSport === 'bike' ? 'Đạp Xe' : 'Bơi Lội');
+
+        let html = `<table class="score-table">
+            <thead>
+                <tr>
+                    <th style="width:40px">STT</th>
+                    <th style="text-align:left; padding-left:12px;">Tên VĐV</th>
+                    <th style="width:150px">Thành Tích (km)</th>
+                </tr>
+            </thead>
+            <tbody>`;
+
+        members.forEach((member, idx) => {
+            let val = sportData[member] !== undefined ? sportData[member] : '';
+            html += `<tr>
+                <td class="stt">${idx + 1}</td>
+                <td class="member-name">${member}</td>
+                <td>
+                    <input type="number" 
+                           id="score-${idx}" 
+                           data-member="${member}" 
+                           value="${val}" 
+                           placeholder="0.0" 
+                           step="0.01" 
+                           min="0">
+                </td>
+            </tr>`;
+        });
+
+        html += `</tbody></table>`;
+        container.innerHTML = html;
+    }
+
+    // Lưu dữ liệu điểm từ bảng ô nhập
+    function saveSportData() {
+        let teamName = document.getElementById('team-select').value;
+        let week = document.getElementById('week-select').value;
+
+        if(!teamName || !db.teams[teamName]) {
+            showToast('Vui lòng chọn đội trước khi lưu!');
+            return;
+        }
+
+        // Đảm bảo cấu trúc tồn tại
+        if(!db.sports[currentSport][week]) {
+            db.sports[currentSport][week] = {};
+        }
+
+        // Đọc tất cả input trong bảng
+        let inputs = document.querySelectorAll('.score-table input[type="number"]');
+        inputs.forEach(input => {
+            let member = input.getAttribute('data-member');
+            let val = parseFloat(input.value);
+            if(!isNaN(val) && val > 0) {
+                db.sports[currentSport][week][member] = val;
+            } else {
+                // Xóa nếu giá trị trống hoặc 0
+                delete db.sports[currentSport][week][member];
             }
         });
 
-        db.sports[currentSport][week] = newData;
         saveDB();
+        showToast('Đã lưu thành tích thành công!');
     }
 
     // Tính toán và cập nhật Bảng xếp hạng
