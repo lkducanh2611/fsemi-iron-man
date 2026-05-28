@@ -479,7 +479,6 @@
                 }
             }
         }
-        }
     }
 
     // Cấu hình GitHub
@@ -1159,6 +1158,7 @@
         db.sports[currentSport][week] = {};
 
         let cols = currentSport === 'bonus' ? db.bonusColumns : ['score'];
+        let rows = document.querySelectorAll('#score-table tbody tr');
 
         rows.forEach(row => {
             let nameInput = row.querySelector('.input-name');
