@@ -194,7 +194,7 @@
       "week7": {},
       "week8": {},
       "weekNaN": {
-        "Duy Đăng Lương": 3.09
+        "Duy Đăng Lương": 6.18
       }
     },
     "bike": {
@@ -257,5 +257,7 @@
       "week8": {}
     }
   },
-  "processedStravaIds": {}
+  "processedStravaIds": {
+    "undefined": true
+  }
 }
