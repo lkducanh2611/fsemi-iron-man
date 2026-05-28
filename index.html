@@ -245,13 +245,14 @@
 </header>
 
 <nav>
-    <button class="nav-btn active" onclick="switchPage('leaderboard', this)">Bảng Xếp Hạng</button>
+    <button class="nav-btn active" onclick="switchPage('leaderboard-team', this)">BXH Đồng Đội</button>
+    <button class="nav-btn" onclick="switchPage('leaderboard-ind', this)">BXH Cá Nhân</button>
     <button class="nav-btn" onclick="switchPage('admin', this)">Nhập Điểm (Admin)</button>
 </nav>
 
 <div class="container">
-    <!-- TRANG 1: BẢNG XẾP HẠNG -->
-    <div id="leaderboard" class="page active">
+    <!-- TRANG 1: BXH ĐỒNG ĐỘI -->
+    <div id="leaderboard-team" class="page active">
         <h3 style="text-align: center; color: var(--secondary);">BẢNG XẾP HẠNG ĐỒNG ĐỘI</h3>
         <p style="text-align: center; font-size: 14px; color: #666;">Công thức: (Chạy x 2.5) + (Đạp x 1) + (Bơi x 20)</p>
         <table>
@@ -268,8 +269,12 @@
             <tbody id="leaderboard-body">
             </tbody>
         </table>
+    </div>
 
-        <h3 style="text-align: center; color: var(--secondary); margin-top: 40px;">BẢNG XẾP HẠNG CÁ NHÂN</h3>
+    <!-- TRANG 2: BXH CÁ NHÂN -->
+    <div id="leaderboard-ind" class="page">
+        <h3 style="text-align: center; color: var(--secondary);">BẢNG XẾP HẠNG CÁ NHÂN</h3>
+        <p style="text-align: center; font-size: 14px; color: #666;">Công thức: (Chạy x 2.5) + (Đạp x 1) + (Bơi x 20)</p>
         <table>
             <thead>
                 <tr>
@@ -424,7 +429,7 @@
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
         document.getElementById(pageId).classList.add('active');
         btn.classList.add('active');
-        if(pageId === 'leaderboard') updateLeaderboard();
+        if(pageId.startsWith('leaderboard')) updateLeaderboard();
         if(pageId === 'admin') renderScoreTable();
     }
 
@@ -900,19 +905,21 @@
             }
         }
 
-        // Tính điểm Đội
+        // Tính điểm Đội (loại bỏ "Tự do")
         let teamResults = [];
         for (const [tName, stat] of Object.entries(teamStats)) {
+            if (tName === 'Tự do') continue; // Bỏ qua đội Tự do
             let score = (stat.run * 2.5) + (stat.bike * 1) + (stat.swim * 20);
-            if (score > 0 || tName !== 'Tự do') {
+            if (score > 0) {
                 teamResults.push({ team: tName, run: stat.run, bike: stat.bike, swim: stat.swim, score: score });
             }
         }
         teamResults.sort((a, b) => b.score - a.score);
 
-        // Tính điểm Cá nhân
+        // Tính điểm Cá nhân (loại bỏ VĐV "Tự do")
         let indResults = [];
         for (const [iName, stat] of Object.entries(individualStats)) {
+            if (stat.team === 'Tự do') continue; // Bỏ qua các VĐV ngoài danh sách khai báo
             let score = (stat.run * 2.5) + (stat.bike * 1) + (stat.swim * 20);
             if (score > 0) {
                 indResults.push({ name: stat.name, team: stat.team, run: stat.run, bike: stat.bike, swim: stat.swim, score: score });
