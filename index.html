@@ -361,8 +361,14 @@
                 <input type="password" id="github-token-input" placeholder="Nhập GitHub Personal Access Token (ghp_...)" style="width: 350px; padding: 8px; border: 1px solid #bdc3c7; border-radius: 4px;">
                 <button onclick="saveGithubToken()" style="padding: 8px 15px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Lưu Token</button>
                 <span id="token-status" style="margin-left: 10px; font-size: 14px; font-weight: bold;"></span>
-                <p style="font-size: 13px; color: #555; margin-top: 8px;">* Token này chỉ lưu trên trình duyệt của bạn. Hệ thống sẽ tự động dùng nó để đẩy dữ liệu cập nhật lên `data.json` của kho lưu trữ.</p>
-            </div>
+                <div style="font-size: 13px; color: #555; margin-top: 10px; background: #fff; padding: 10px; border-radius: 4px; border-left: 3px solid #e74c3c;">
+                    <strong>Cách sửa lỗi "Resource not accessible by personal access token":</strong><br>
+                    Lỗi này xảy ra khi Token của bạn chưa được cấp quyền ghi đè (Write) vào kho mã nguồn. Bạn hãy làm theo sau:<br>
+                    1. Vào <a href="https://github.com/settings/tokens" target="_blank">Cài đặt Token (Classic) của GitHub</a>.<br>
+                    2. Bấm <b>Generate new token (classic)</b>.<br>
+                    3. Trong phần <b>Select scopes</b>, kéo xuống và đánh dấu tích vào ô <b>"repo"</b> (Full control of private repositories).<br>
+                    4. Tạo Token, copy mã `ghp_...` dán vào ô bên trên và lưu lại.
+                </div>
 
             <div class="admin-grid">
                 <!-- Cột trái: Khai báo danh sách team -->
