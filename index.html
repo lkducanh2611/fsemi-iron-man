@@ -408,7 +408,7 @@
             <div class="score-setup">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                     <h3 style="color: var(--secondary); margin: 0;">2. Nhập Thành Tích</h3>
-                    <button onclick="exportAdminData()" style="background: #27ae60; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; padding: 8px 15px;">📥 Xuất Toàn Bộ Data</button>
+                    <button onclick="showAdminSettings()" style="background:#2980b9;color:white;border:none;padding:8px 15px;border-radius:4px;cursor:pointer;margin-left:10px;">⚙️ Cài Đặt</button>
                 </div>
 
                 <!-- Tabs chọn môn -->
@@ -473,6 +473,28 @@
                 <div style="display: flex; gap: 10px; margin-top: 15px;">
                     <button class="btn-save" onclick="saveSportData()" style="flex: 7;">Lưu Thành Tích</button>
                     <button onclick="resetSportData()" style="flex: 3; background: #e74c3c; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; padding: 10px;">Làm Lại (Reset)</button>
+                </div>
+                <!-- Settings sub‑tab (hidden by default) -->
+                <div id="admin-settings" class="page" style="display:none;">
+                    <h3 style="text-align:center; color: var(--secondary);">CÀI ĐẶT</h3>
+                    <div style="margin:20px;">
+                        <label>GitHub Personal Access Token:</label><br>
+                        <input type="password" id="github-token-input" placeholder="ghp_..." style="width:350px; padding:8px; border:1px solid #bdc3c7; border-radius:4px;" />
+                        <button onclick="saveGithubToken()" style="padding:8px 15px; background:#3498db; color:white; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">Lưu Token</button>
+                        <span id="token-status" style="margin-left:10px; font-size:14px; font-weight:bold;"></span>
+                    </div>
+                    <div style="margin:20px;">
+                        <h4>Strava Club IDs (numeric)</h4>
+                        <label>Run Club ID:</label><br>
+                        <input type="text" id="strava-run-id" placeholder="Run club ID" style="width:200px; padding:5px;" /><br>
+                        <label>Bike Club ID:</label><br>
+                        <input type="text" id="strava-bike-id" placeholder="Bike club ID" style="width:200px; padding:5px;" /><br>
+                        <label>Swim Club ID:</label><br>
+                        <input type="text" id="strava-swim-id" placeholder="Swim club ID" style="width:200px; padding:5px;" /><br>
+                        <button onclick="saveStravaConfig()" style="margin-top:5px; padding:8px 15px; background:#27ae60; color:white; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">Lưu Config</button>
+                        <span id="strava-status" style="margin-left:10px; font-size:14px; font-weight:bold;"></span>
+                    </div>
+                    <button onclick="hideAdminSettings()" style="margin:20px; padding:8px 15px; background:#7f8c8d; color:white; border:none; border-radius:4px; cursor:pointer;">← Quay lại</button>
                 </div>
             </div>
         </div>
@@ -1668,6 +1690,50 @@
 
     // ==========================================
     // CÁC HÀM XUẤT EXCEL
+// ---------------------------------------------------------
+// Settings helpers (GitHub token & Strava IDs)
+function showAdminSettings(){
+    // hide main admin page (id="admin") and show settings page
+    const adminDiv = document.getElementById('admin');
+    if(adminDiv) adminDiv.style.display='none';
+    const settingsDiv = document.getElementById('admin-settings');
+    if(settingsDiv) settingsDiv.style.display='block';
+    // preload stored values
+    document.getElementById('github-token-input').value = localStorage.getItem('githubToken')||'';
+    document.getElementById('strava-run-id').value = localStorage.getItem('stravaRun')||'';
+    document.getElementById('strava-bike-id').value = localStorage.getItem('stravaBike')||'';
+    document.getElementById('strava-swim-id').value = localStorage.getItem('stravaSwim')||'';
+}
+function hideAdminSettings(){
+    const settingsDiv = document.getElementById('admin-settings');
+    if(settingsDiv) settingsDiv.style.display='none';
+    const adminDiv = document.getElementById('admin');
+    if(adminDiv) adminDiv.style.display='block';
+}
+function saveGithubToken(){
+    const token = document.getElementById('github-token-input').value.trim();
+    if(token){
+        localStorage.setItem('githubToken', token);
+        document.getElementById('token-status').textContent='✔️ Lưu thành công';
+    } else {
+        document.getElementById('token-status').textContent='⚠️ Vui lòng nhập token';
+    }
+}
+function saveStravaConfig(){
+    const run = document.getElementById('strava-run-id').value.trim();
+    const bike = document.getElementById('strava-bike-id').value.trim();
+    const swim = document.getElementById('strava-swim-id').value.trim();
+    if(run) localStorage.setItem('stravaRun', run);
+    if(bike) localStorage.setItem('stravaBike', bike);
+    if(swim) localStorage.setItem('stravaSwim', swim);
+    document.getElementById('strava-status').textContent='✔️ Lưu cấu hình Strava';
+}
+// Override STRAVA_CLUBS constant to read from localStorage (fallback to empty strings)
+const STRAVA_CLUBS = {
+    run: localStorage.getItem('stravaRun') || '',
+    bike: localStorage.getItem('stravaBike') || '',
+    swim: localStorage.getItem('stravaSwim') || ''
+};
     // ==========================================
     function exportToExcel(dataArray, filename) {
         if (!window.XLSX) {
