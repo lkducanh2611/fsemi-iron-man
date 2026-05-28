@@ -498,8 +498,12 @@
         let displayNames = [];
 
         if (team === 'all') {
-            // Hiển thị những người đã có điểm, nếu trống thì để 1 dòng trống để nhập
-            displayNames = Object.keys(sportData);
+            // Hiển thị toàn bộ VĐV của tất cả các đội + những người đã có điểm (vđv tự do nếu lỡ nhập)
+            displayNames = getAllMembers();
+            let existingNames = Object.keys(sportData);
+            existingNames.forEach(name => {
+                if (!displayNames.includes(name)) displayNames.push(name);
+            });
             if(displayNames.length === 0) {
                 displayNames = ['']; 
             }
