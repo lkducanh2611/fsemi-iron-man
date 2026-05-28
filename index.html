@@ -390,48 +390,7 @@
                 </div>
             </div>
 
-            <!-- Cấu hình Strava -->
-            <div style="background: #fdf2e9; padding: 15px; border-left: 5px solid #e67e22; margin-bottom: 20px; border-radius: 4px;">
-                <h4 style="margin: 0 0 10px 0; color: #d35400;">Cấu hình tự động đồng bộ Strava Clubs</h4>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
-                    <div>
-                        <label>Client ID:</label><br>
-                        <input type="text" id="strava-client-id" placeholder="VD: 123456" style="width: 100%; padding: 6px; border: 1px solid #bdc3c7; border-radius: 4px;">
-                    </div>
-                    <div>
-                        <label>Client Secret:</label><br>
-                        <input type="password" id="strava-client-secret" placeholder="Mã bí mật..." style="width: 100%; padding: 6px; border: 1px solid #bdc3c7; border-radius: 4px;">
-                    </div>
-                    <div style="grid-column: 1 / -1;">
-                        <label>Refresh Token:</label><br>
-                        <input type="password" id="strava-refresh-token" placeholder="Mã refresh token..." style="width: 100%; padding: 6px; border: 1px solid #bdc3c7; border-radius: 4px;">
-                    </div>
-                    <div style="grid-column: 1 / -1;">
-                        <label>Ngày Bắt Đầu Giải (Tuần 1 bắt đầu từ ngày này, VD: 2026-06-01):</label><br>
-                        <input type="text" id="strava-tournament-start" placeholder="VD: 2026-06-01" style="width: 100%; padding: 6px; border: 1px solid #bdc3c7; border-radius: 4px;">
-                    </div>
-                    <div>
-                        <label>ID Group Chạy:</label><br>
-                        <input type="text" id="strava-club-run" placeholder="VD: 1234567" style="width: 100%; padding: 6px; border: 1px solid #bdc3c7; border-radius: 4px;">
-                    </div>
-                    <div>
-                        <label>ID Group Đạp:</label><br>
-                        <input type="text" id="strava-club-bike" placeholder="VD: 1234567" style="width: 100%; padding: 6px; border: 1px solid #bdc3c7; border-radius: 4px;">
-                    </div>
-                    <div>
-                        <label>ID Group Bơi:</label><br>
-                        <input type="text" id="strava-club-swim" placeholder="VD: 1234567" style="width: 100%; padding: 6px; border: 1px solid #bdc3c7; border-radius: 4px;">
-                    </div>
-                </div>
-                <button onclick="saveStravaConfig()" style="padding: 8px 15px; background: #e67e22; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Lưu Cấu Hình Strava</button>
-                <span id="strava-status" style="margin-left: 10px; font-size: 14px; font-weight: bold;"></span>
-                <div style="font-size: 13px; color: #555; margin-top: 10px; background: #fff; padding: 10px; border-radius: 4px; border-left: 3px solid #d35400;">
-                    <strong>Hướng dẫn lấy thông tin Strava:</strong><br>
-                    1. Vào <a href="https://www.strava.com/settings/api" target="_blank">Strava API Settings</a> và tạo một ứng dụng.<br>
-                    2. Lấy <b>Client ID</b> và <b>Client Secret</b>.<br>
-                    3. Lấy mã <b>Refresh Token</b> (Yêu cầu phải có quyền đọc dữ liệu nhóm - <code>read_all</code>).
-                </div>
-            </div>
+            
 
             <div class="admin-grid">
                 <!-- Cột trái: Khai báo danh sách team -->
@@ -484,11 +443,7 @@
                             <option value="all">-- Tất cả --</option>
                         </select>
                     </div>
-                    <div style="background: #fcf3cf; padding: 5px 10px; border-radius: 4px; border: 1px solid #f1c40f; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                        <strong style="color: #d35400;">Đồng bộ dữ liệu Strava:</strong>
-                        <button onclick="syncAllStrava()" style="padding: 5px 10px; background: #e67e22; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px;">🔄 Tự Động Cập Nhật 3 Môn</button>
-                        <button onclick="clearStravaCache()" style="padding: 5px 10px; background: #e74c3c; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; margin-left: auto;">🗑️ Quét lại từ đầu</button>
-                    </div>
+                    
                 </div>
                 <div style="margin-top: 10px; margin-bottom: 10px; font-size: 13px;">
                     <div>
@@ -534,17 +489,7 @@
                         <button onclick="saveGithubToken()" style="padding:8px 15px; background:#3498db; color:white; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">Lưu Token</button>
                         <span id="token-status" style="margin-left:10px; font-size:14px; font-weight:bold;"></span>
                     </div>
-                    <div style="margin:20px;">
-                        <h4>Strava Club IDs (numeric)</h4>
-                        <label>Run Club ID:</label><br>
-                        <input type="text" id="strava-run-id" placeholder="Run club ID" style="width:200px; padding:5px;" /><br>
-                        <label>Bike Club ID:</label><br>
-                        <input type="text" id="strava-bike-id" placeholder="Bike club ID" style="width:200px; padding:5px;" /><br>
-                        <label>Swim Club ID:</label><br>
-                        <input type="text" id="strava-swim-id" placeholder="Swim club ID" style="width:200px; padding:5px;" /><br>
-                        <button onclick="saveStravaConfig()" style="margin-top:5px; padding:8px 15px; background:#27ae60; color:white; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">Lưu Config</button>
-                        <span id="strava-status" style="margin-left:10px; font-size:14px; font-weight:bold;"></span>
-                    </div>
+                    
                     <button onclick="hideAdminSettings()" style="margin:20px; padding:8px 15px; background:#7f8c8d; color:white; border:none; border-radius:4px; cursor:pointer;">← Quay lại</button>
                 </div>
             </div>
@@ -677,19 +622,7 @@
             document.getElementById('token-status').style.color = "green";
         }
 
-        // Phục hồi cấu hình Strava
-        const stravaConfig = JSON.parse(localStorage.getItem('stravaConfig') || '{}');
-        if (stravaConfig.clientId) document.getElementById('strava-client-id').value = stravaConfig.clientId;
-        if (stravaConfig.clientSecret) document.getElementById('strava-client-secret').value = stravaConfig.clientSecret;
-        if (stravaConfig.refreshToken) document.getElementById('strava-refresh-token').value = stravaConfig.refreshToken;
-        if (stravaConfig.tournamentStart) document.getElementById('strava-tournament-start').value = stravaConfig.tournamentStart;
-        if (stravaConfig.clubRun) document.getElementById('strava-club-run').value = stravaConfig.clubRun;
-        if (stravaConfig.clubBike) document.getElementById('strava-club-bike').value = stravaConfig.clubBike;
-        if (stravaConfig.clubSwim) document.getElementById('strava-club-swim').value = stravaConfig.clubSwim;
-        if (stravaConfig.clientId) {
-            document.getElementById('strava-status').innerText = "✅ Đã cấu hình";
-            document.getElementById('strava-status').style.color = "green";
-        }
+        
 
         // Gắn sự kiện paste thông minh cho vùng bảng
         let container = document.getElementById('score-table-container');
@@ -738,311 +671,7 @@
         }
     }
 
-    function saveStravaConfig() {
-        let getVal = function(id) {
-            let el = document.getElementById(id);
-            return el ? el.value.trim() : '';
-        };
-        let config = {
-            clientId: getVal('strava-client-id'),
-            clientSecret: getVal('strava-client-secret'),
-            refreshToken: getVal('strava-refresh-token'),
-            tournamentStart: getVal('strava-tournament-start'),
-            clubRun: getVal('strava-club-run'),
-            clubBike: getVal('strava-club-bike'),
-            clubSwim: getVal('strava-club-swim')
-        };
-        localStorage.setItem('stravaConfig', JSON.stringify(config));
-        let statusEl = document.getElementById('strava-status');
-        if (statusEl) {
-            statusEl.innerText = "✅ Đã lưu cấu hình";
-            statusEl.style.color = "green";
-        }
-    }
-
-    // Sử dụng Vercel Serverless Functions làm proxy
-    const VERCEL_API = 'https://fsemi-iron-man.vercel.app/api';
-
-    // Đọc cấu hình Strava từ DOM + localStorage (ưu tiên DOM nếu có)
-    function getStravaConfig() {
-        let stored = JSON.parse(localStorage.getItem('stravaConfig') || '{}');
-        let getVal = function(id, fallback) {
-            let el = document.getElementById(id);
-            let domVal = el ? el.value.trim() : '';
-            return domVal || (fallback || '').trim();
-        };
-        return {
-            clientId: getVal('strava-client-id', stored.clientId),
-            clientSecret: getVal('strava-client-secret', stored.clientSecret),
-            refreshToken: getVal('strava-refresh-token', stored.refreshToken),
-            tournamentStart: getVal('strava-tournament-start', stored.tournamentStart),
-            clubRun: getVal('strava-club-run', stored.clubRun),
-            clubBike: getVal('strava-club-bike', stored.clubBike),
-            clubSwim: getVal('strava-club-swim', stored.clubSwim)
-        };
-    }
-
-    // Lấy Access Token từ Refresh Token qua Vercel Proxy
-    async function getStravaAccessToken() {
-        const config = getStravaConfig();
-        if (!config.clientId || !config.clientSecret || !config.refreshToken) {
-            let missing = [];
-            if (!config.clientId) missing.push('Client ID');
-            if (!config.clientSecret) missing.push('Client Secret');
-            if (!config.refreshToken) missing.push('Refresh Token');
-            throw new Error("Thiếu: " + missing.join(', ') + ". Vui lòng nhập đầy đủ ở phần Cấu hình Strava, bấm Lưu Cấu Hình, rồi thử lại.");
-        }
-
-        let tokenUrl = VERCEL_API + '/strava-token';
-        let res;
-        try {
-            res = await fetch(tokenUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    client_id: config.clientId,
-                    client_secret: config.clientSecret,
-                    refresh_token: config.refreshToken
-                })
-            });
-        } catch(networkErr) {
-            throw new Error("Không thể kết nối tới Strava (lỗi mạng hoặc CORS). Chi tiết: " + networkErr.message);
-        }
-        if (!res.ok) {
-            let errText = await res.text().catch(() => '');
-            throw new Error(`Strava từ chối xác thực (HTTP ${res.status}). Kiểm tra lại Client ID, Client Secret và Refresh Token. Chi tiết: ${errText}`);
-        }
-        let data = await res.json();
-        // Lưu lại Refresh Token mới nếu Strava có trả về
-        if (data.refresh_token && data.refresh_token !== config.refreshToken) {
-            config.refreshToken = data.refresh_token;
-            localStorage.setItem('stravaConfig', JSON.stringify(config));
-            let rtEl = document.getElementById('strava-refresh-token');
-            if (rtEl) rtEl.value = config.refreshToken;
-        }
-        return data.access_token;
-    }
-
-    // Lọc bỏ dấu tiếng Việt để so sánh tên
-    function removeVietnameseTones(str) {
-        str = str.replace(/à|á|ạ|ả|ã|â|ầ|ấ|ậ|ẩ|ẫ|ă|ằ|ắ|ặ|ẳ|ẵ/g,"a"); 
-        str = str.replace(/è|é|ẹ|ẻ|ẽ|ê|ề|ế|ệ|ể|ễ/g,"e"); 
-        str = str.replace(/ì|í|ị|ỉ|ĩ/g,"i"); 
-        str = str.replace(/ò|ó|ọ|ỏ|õ|ô|ồ|ố|ộ|ổ|ỗ|ơ|ờ|ớ|ợ|ở|ỡ/g,"o"); 
-        str = str.replace(/ù|ú|ụ|ủ|ũ|ư|ừ|ứ|ự|ử|ữ/g,"u"); 
-        str = str.replace(/ỳ|ý|ỵ|ỷ|ỹ/g,"y"); 
-        str = str.replace(/đ/g,"d");
-        str = str.replace(/À|Á|Ạ|Ả|Ã|Â|Ầ|Ấ|Ậ|Ẩ|Ẫ|Ă|Ằ|Ắ|Ặ|Ẳ|Ẵ/g, "A");
-        str = str.replace(/È|É|Ẹ|Ẻ|Ẽ|Ê|Ề|Ế|Ệ|Ể|Ễ/g, "E");
-        str = str.replace(/Ì|Í|Ị|Ỉ|Ĩ/g, "I");
-        str = str.replace(/Ò|Ó|Ọ|Ỏ|Õ|Ô|Ồ|Ố|Ộ|Ổ|Ỗ|Ơ|Ờ|Ớ|Ợ|Ở|Ỡ/g, "O");
-        str = str.replace(/Ù|Ú|Ụ|Ủ|Ũ|Ư|Ừ|Ứ|Ự|Ử|Ữ/g, "U");
-        str = str.replace(/Ỳ|Ý|Ỵ|Ỷ|Ỹ/g, "Y");
-        str = str.replace(/Đ/g, "D");
-        return str.toLowerCase().trim();
-    }
-
-    // Tính độ tương đồng giữa 2 chuỗi (phương pháp so sánh ký tự)
-    function getSimilarity(str1, str2) {
-        if (str1 === str2) return 1.0;
-        let getBigrams = (s) => {
-            let bg = [];
-            for (let i = 0; i < s.length - 1; i++) bg.push(s.substring(i, i + 2));
-            return bg;
-        };
-        let bg1 = getBigrams(str1);
-        let bg2 = getBigrams(str2);
-        if (bg1.length === 0 || bg2.length === 0) return 0;
-        let intersection = 0;
-        let bg2Copy = [...bg2];
-        for (let i = 0; i < bg1.length; i++) {
-            let index = bg2Copy.indexOf(bg1[i]);
-            if (index !== -1) {
-                intersection++;
-                bg2Copy.splice(index, 1);
-            }
-        }
-        return (2.0 * intersection) / (bg1.length + bg2.length);
-    }
-
-    function normalizeDateString(dateStr) {
-        if (!dateStr) return null;
-        let parts = dateStr.trim().split(/[\/\-\.]/);
-        if (parts.length === 3) {
-            let p1 = parseInt(parts[0]);
-            let p2 = parseInt(parts[1]);
-            let p3 = parseInt(parts[2]);
-            let y, m, d;
-            if (p3 > 1000) { y = p3; m = p2; d = p1; }
-            else if (p1 > 1000) { y = p1; m = p2; d = p3; }
-            else return null;
-            
-            if (isNaN(y) || isNaN(m) || isNaN(d)) return null;
-            return `${y}-${m.toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`;
-        }
-        return null;
-    }
-
-    async function syncAllStrava() {
-        saveStravaConfig();
-        let config = getStravaConfig();
-        
-        let rawDate = config.tournamentStart || '';
-        
-        if (!rawDate) {
-            alert('Bạn chưa nhập Ngày Bắt Đầu Giải! Vui lòng nhập vào ô ở phần Cấu hình Strava (VD: 2026-06-01) rồi bấm lại nút đồng bộ.');
-            return;
-        }
-        
-        let validDateStr = normalizeDateString(rawDate);
-        if (!validDateStr) {
-            alert('Ngày "' + rawDate + '" không hợp lệ. Vui lòng nhập theo định dạng: 2026-06-01 (Năm-Tháng-Ngày)');
-            return;
-        }
-        
-        let tourStart = new Date(validDateStr);
-        tourStart.setHours(0, 0, 0, 0);
-
-        let sportClubMap = {
-            'run': config.clubRun,
-            'bike': config.clubBike,
-            'swim': config.clubSwim
-        };
-
-        showLoading("Đang lấy dữ liệu từ 3 Group Strava...");
-        try {
-            let accessToken = await getStravaAccessToken();
-            let localNames = getAllMembers();
-            if (!db.processedStravaIds) db.processedStravaIds = {};
-            
-            let report = {
-                fetched: 0,
-                processedAlready: 0,
-                outOfRange: 0,
-                nameMismatch: 0,
-                success: 0,
-                unmatchedNames: new Set()
-            };
-
-            for (let sport of ['run', 'bike', 'swim']) {
-                let clubId = sportClubMap[sport];
-                if (!clubId) continue;
-
-                let clubUrl = `${VERCEL_API}/strava-activities?clubId=${clubId}`;
-                let res;
-                try {
-                    res = await fetch(clubUrl, { headers: { 'Authorization': `Bearer ${accessToken}` } });
-                } catch(networkErr) {
-                    console.error(`Lỗi mạng môn ${sport}:`, networkErr);
-                    continue;
-                }
-                if (!res.ok) continue;
-                let activities = await res.json();
-                
-                report.fetched += activities.length;
-
-                activities.forEach(act => {
-                    if (db.processedStravaIds[act.id]) {
-                        report.processedAlready++;
-                        return;
-                    }
-
-                    let actDate = new Date(act.start_date_local || act.start_date);
-                    let diffTime = actDate.getTime() - tourStart.getTime();
-                    let diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-                    
-                    if (diffDays < 0 || diffDays >= TOTAL_WEEKS * 7) {
-                        report.outOfRange++;
-                        return;
-                    }
-
-                    let weekIndex = Math.floor(diffDays / 7) + 1;
-                    
-                    let sFirstName = (act.athlete.firstname || "").trim();
-                    let sLastName = (act.athlete.lastname || "").trim();
-                    let fullNameStr = (sFirstName + " " + sLastName).trim();
-                    
-                    let normalizedStrava = removeVietnameseTones(fullNameStr).replace(/\s+/g, ' ');
-                    let stravaWords = normalizedStrava.split(' ').sort().join(' ');
-
-                    let matchedName = null;
-                    let bestScore = 0;
-
-                    localNames.forEach(n => {
-                        let normalizedLocal = removeVietnameseTones(n).replace(/\s+/g, ' ');
-                        let localWords = normalizedLocal.split(' ').sort().join(' ');
-                        
-                        let score = 0;
-                        if (normalizedLocal === normalizedStrava) {
-                            score = 1;
-                        } else if (localWords === stravaWords) {
-                            score = 1;
-                        } else {
-                            // Tính độ tương đồng bằng phương pháp so sánh ký tự
-                            let s1 = getSimilarity(normalizedStrava, normalizedLocal);
-                            let s2 = getSimilarity(stravaWords, localWords);
-                            score = Math.max(s1, s2);
-                        }
-                        
-                        if (score > bestScore) {
-                            bestScore = score;
-                            matchedName = n;
-                        }
-                    });
-                    
-                    // Lấy kết quả nếu độ trùng khớp >= 75%
-                    if (bestScore >= 0.75) {
-                        let weekKey = 'week' + weekIndex;
-                        let distKm = act.distance / 1000;
-                        
-                        let currentData = db.sports[sport][weekKey];
-                        if (!currentData) currentData = {};
-                        let existingDist = currentData[matchedName] ? parseFloat(currentData[matchedName]) : 0;
-                        
-                        currentData[matchedName] = parseFloat((existingDist + distKm).toFixed(2));
-                        db.sports[sport][weekKey] = currentData;
-                        
-                        db.processedStravaIds[act.id] = true;
-                        report.success++;
-                    } else {
-                        report.nameMismatch++;
-                        report.unmatchedNames.add(fullNameStr);
-                    }
-                });
-            }
-
-            renderScoreTable();
-            saveDB(); // Tự động lưu và push lên git
-            hideLoading();
-            
-            let msg = `TỔNG KẾT ĐỒNG BỘ:\n`;
-            msg += `- Lấy về: ${report.fetched} hoạt động mới nhất\n`;
-            msg += `- Đã cộng điểm từ trước: ${report.processedAlready}\n`;
-            msg += `- Ngoài thời gian giải: ${report.outOfRange}\n`;
-            msg += `- Sai tên VĐV: ${report.nameMismatch}\n`;
-            msg += `=> THÀNH CÔNG: Đã cộng thêm ${report.success} hoạt động!\n\n`;
-            
-            if (report.nameMismatch > 0) {
-                msg += `Các tên Strava không khớp danh sách:\n`;
-                let unNames = Array.from(report.unmatchedNames).slice(0, 10);
-                msg += unNames.join(", ") + (report.unmatchedNames.size > 10 ? "..." : "");
-            }
-            
-            alert(msg);
-
-        } catch (e) {
-            hideLoading();
-            alert("Lỗi Strava: " + e.message);
-        }
-    }
-
-    function clearStravaCache() {
-        if (confirm("Lưu ý: Thao tác này sẽ XÓA BỘ NHỚ ĐỆM lịch sử đồng bộ Strava. Lần Đồng Bộ tiếp theo sẽ quét lại TẤT CẢ các hoạt động trên Strava kể từ Ngày Bắt Đầu Giải và cộng dồn lại vào bảng điểm.\n\nNếu bạn vừa xóa trắng điểm của VĐV và muốn lấy lại dữ liệu từ Strava, hãy bấm OK.")) {
-            db.processedStravaIds = {};
-            saveDB();
-            alert("Đã xóa cache thành công! Giờ bạn có thể bấm 'Tự Động Cập Nhật 3 Môn' để quét lại từ đầu.");
-        }
-    }
+    
 
     async function pushToGitHub(dbObj) {
         let token = localStorage.getItem('ghToken');
@@ -2072,9 +1701,6 @@ function showAdminSettings(){
     if(settingsDiv) settingsDiv.style.display='block';
     // preload stored values
     document.getElementById('github-token-input').value = localStorage.getItem('githubToken')||'';
-    document.getElementById('strava-run-id').value = localStorage.getItem('stravaRun')||'';
-    document.getElementById('strava-bike-id').value = localStorage.getItem('stravaBike')||'';
-    document.getElementById('strava-swim-id').value = localStorage.getItem('stravaSwim')||'';
 }
 function hideAdminSettings(){
     const settingsDiv = document.getElementById('admin-settings');
@@ -2091,22 +1717,7 @@ function saveGithubToken(){
         document.getElementById('token-status').textContent='⚠️ Vui lòng nhập token';
     }
 }
-function saveStravaConfig(){
-    const run = document.getElementById('strava-run-id').value.trim();
-    const bike = document.getElementById('strava-bike-id').value.trim();
-    const swim = document.getElementById('strava-swim-id').value.trim();
-    if(run) localStorage.setItem('stravaRun', run);
-    if(bike) localStorage.setItem('stravaBike', bike);
-    if(swim) localStorage.setItem('stravaSwim', swim);
-    document.getElementById('strava-status').textContent='✔️ Lưu cấu hình Strava';
-}
-// Override STRAVA_CLUBS constant to read from localStorage (fallback to empty strings)
-const STRAVA_CLUBS = {
-    run: localStorage.getItem('stravaRun') || '',
-    bike: localStorage.getItem('stravaBike') || '',
-    swim: localStorage.getItem('stravaSwim') || ''
-};
-    // ==========================================
+// ==========================================
     function exportToExcel(dataArray, filename) {
         if (!window.XLSX) {
             alert("Thư viện xuất Excel chưa được tải. Vui lòng kiểm tra lại kết nối mạng!");
