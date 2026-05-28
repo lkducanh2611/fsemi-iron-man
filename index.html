@@ -841,6 +841,29 @@
         return str.toLowerCase().trim();
     }
 
+    // Tính độ tương đồng giữa 2 chuỗi (phương pháp so sánh ký tự)
+    function getSimilarity(str1, str2) {
+        if (str1 === str2) return 1.0;
+        let getBigrams = (s) => {
+            let bg = [];
+            for (let i = 0; i < s.length - 1; i++) bg.push(s.substring(i, i + 2));
+            return bg;
+        };
+        let bg1 = getBigrams(str1);
+        let bg2 = getBigrams(str2);
+        if (bg1.length === 0 || bg2.length === 0) return 0;
+        let intersection = 0;
+        let bg2Copy = [...bg2];
+        for (let i = 0; i < bg1.length; i++) {
+            let index = bg2Copy.indexOf(bg1[i]);
+            if (index !== -1) {
+                intersection++;
+                bg2Copy.splice(index, 1);
+            }
+        }
+        return (2.0 * intersection) / (bg1.length + bg2.length);
+    }
+
     function normalizeDateString(dateStr) {
         if (!dateStr) return null;
         let parts = dateStr.trim().split(/[\/\-\.]/);
@@ -941,15 +964,33 @@
                     let normalizedStrava = removeVietnameseTones(fullNameStr).replace(/\s+/g, ' ');
                     let stravaWords = normalizedStrava.split(' ').sort().join(' ');
 
-                    let matchedName = localNames.find(n => {
+                    let matchedName = null;
+                    let bestScore = 0;
+
+                    localNames.forEach(n => {
                         let normalizedLocal = removeVietnameseTones(n).replace(/\s+/g, ' ');
-                        if (normalizedLocal === normalizedStrava) return true;
-                        // Khớp nếu tên bị đảo ngược (VD: Nguyen Duc Anh <=> Duc Anh Nguyen)
                         let localWords = normalizedLocal.split(' ').sort().join(' ');
-                        return localWords === stravaWords;
+                        
+                        let score = 0;
+                        if (normalizedLocal === normalizedStrava) {
+                            score = 1;
+                        } else if (localWords === stravaWords) {
+                            score = 1;
+                        } else {
+                            // Tính độ tương đồng bằng phương pháp so sánh ký tự
+                            let s1 = getSimilarity(normalizedStrava, normalizedLocal);
+                            let s2 = getSimilarity(stravaWords, localWords);
+                            score = Math.max(s1, s2);
+                        }
+                        
+                        if (score > bestScore) {
+                            bestScore = score;
+                            matchedName = n;
+                        }
                     });
                     
-                    if (matchedName) {
+                    // Lấy kết quả nếu độ trùng khớp >= 75%
+                    if (bestScore >= 0.75) {
                         let weekKey = 'week' + weekIndex;
                         let distKm = act.distance / 1000;
                         
