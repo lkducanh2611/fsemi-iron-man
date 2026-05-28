@@ -558,11 +558,12 @@
             }
         }
 
+        let headerText = currentSport === 'bonus' ? 'Điểm Cộng' : 'Thành Tích (km)';
         let tableHTML = `<table class="score-table" id="score-table">
             <thead>
                 <tr>
                     <th style="text-align:left; padding-left:8px;">Tên VĐV</th>
-                    <th style="width:140px">Thành Tích (km)</th>
+                    <th style="width:140px">${headerText}</th>
                 </tr>
             </thead>
             <tbody>`;
@@ -757,11 +758,12 @@
     // Xử lý dữ liệu CSV từ PapaParse
     function processCSVData(rows) {
         let container = document.getElementById('score-table-container');
+        let headerText = currentSport === 'bonus' ? 'Điểm Cộng' : 'Thành Tích (km)';
         let tableHTML = `<table class="score-table" id="score-table">
             <thead>
                 <tr>
                     <th style="text-align:left; padding-left:8px;">Tên VĐV</th>
-                    <th style="width:140px">Thành Tích (km)</th>
+                    <th style="width:140px">${headerText}</th>
                 </tr>
             </thead>
             <tbody>`;
@@ -837,11 +839,12 @@
         let rowData = [];
         let allMembers = getAllMembers();
         
+        let headerText = currentSport === 'bonus' ? 'Điểm Cộng' : 'Thành Tích (km)';
         let tableHTML = `<table class="score-table" id="score-table">
             <thead>
                 <tr>
                     <th style="text-align:left; padding-left:8px;">Tên VĐV</th>
-                    <th style="width:140px">Thành Tích (km)</th>
+                    <th style="width:140px">${headerText}</th>
                 </tr>
             </thead>
             <tbody>`;
