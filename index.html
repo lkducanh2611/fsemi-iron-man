@@ -406,7 +406,10 @@
 
             <!-- Cột phải: Nhập thành tích bằng bảng -->
             <div class="score-setup">
-                <h3 style="color: var(--secondary);">2. Nhập Thành Tích</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <h3 style="color: var(--secondary); margin: 0;">2. Nhập Thành Tích</h3>
+                    <button onclick="exportAdminData()" style="background: #27ae60; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; padding: 8px 15px;">📥 Xuất Toàn Bộ Data</button>
+                </div>
 
                 <!-- Tabs chọn môn -->
                 <div class="tabs">
@@ -468,8 +471,7 @@
                 </div>
                 
                 <div style="display: flex; gap: 10px; margin-top: 15px;">
-                    <button class="btn-save" onclick="saveSportData()" style="flex: 5;">Lưu Thành Tích</button>
-                    <button onclick="exportAdminData()" style="flex: 2; background: #27ae60; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; padding: 10px;">📥 Xuất Data</button>
+                    <button class="btn-save" onclick="saveSportData()" style="flex: 7;">Lưu Thành Tích</button>
                     <button onclick="resetSportData()" style="flex: 3; background: #e74c3c; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; padding: 10px;">Làm Lại (Reset)</button>
                 </div>
             </div>
@@ -1725,40 +1727,51 @@
     }
 
     function exportAdminData() {
-        let week = document.getElementById('week-select').value;
-        let team = document.getElementById('team-filter').value;
-        let sportData = db.sports[currentSport][week] || {};
-        
-        let displayNames = [];
-        if (team === 'all') {
-            displayNames = getAllMembers();
-            let existingNames = Object.keys(sportData);
-            existingNames.forEach(name => {
-                if (!displayNames.includes(name)) displayNames.push(name);
+        let data = [];
+        let allMembers = getAllMembers(); // Lấy tất cả mọi người (kể cả tự do đã có điểm)
+
+        for (let w = 1; w <= TOTAL_WEEKS; w++) {
+            let wk = 'week' + w;
+            
+            allMembers.forEach(name => {
+                let teamName = "Tự do";
+                // Tìm đội của VĐV
+                for (let t in db.teams) {
+                    if (db.teams[t].includes(name)) {
+                        teamName = t;
+                        break;
+                    }
+                }
+
+                let runVal = (db.sports.run[wk] && db.sports.run[wk][name]) || 0;
+                let bikeVal = (db.sports.bike[wk] && db.sports.bike[wk][name]) || 0;
+                let swimVal = (db.sports.swim[wk] && db.sports.swim[wk][name]) || 0;
+                let bonusData = (db.sports.bonus[wk] && db.sports.bonus[wk][name]) || {};
+
+                // Chỉ xuất những người có ít nhất 1 thành tích trong tuần này (hoặc có thuộc đội để điểm danh)
+                if (runVal === 0 && bikeVal === 0 && swimVal === 0 && Object.keys(bonusData).length === 0 && teamName === "Tự do") {
+                    return; // Bỏ qua người ngoài danh sách mà không có điểm trong tuần này
+                }
+
+                let rowObj = {
+                    "Tuần": "Tuần " + w,
+                    "Tên VĐV": name,
+                    "Đội": teamName,
+                    "Chạy (km)": runVal,
+                    "Đạp (km)": bikeVal,
+                    "Bơi (km)": swimVal
+                };
+
+                // Thêm các cột Bonus động
+                db.bonusColumns.forEach(colName => {
+                    rowObj["Bonus - " + colName] = bonusData[colName] || 0;
+                });
+
+                data.push(rowObj);
             });
-        } else {
-            displayNames = db.teams[team] || [];
         }
 
-        let cols = currentSport === 'bonus' ? db.bonusColumns : ['Thành Tích (km)'];
-        let data = [];
-
-        displayNames.forEach(name => {
-            let rowObj = { "Tên VĐV": name, "Đội": db.classes[name] ? (Object.keys(db.teams).find(t => db.teams[t].includes(name)) || "Tự do") : "Tự do" };
-            let val = sportData[name];
-
-            if (currentSport === 'bonus') {
-                cols.forEach(colName => {
-                    rowObj[colName] = (val && val[colName]) ? val[colName] : 0;
-                });
-            } else {
-                rowObj[cols[0]] = val !== undefined ? val : 0;
-            }
-            data.push(rowObj);
-        });
-
-        let sportName = currentSport === 'bonus' ? 'Bonus' : (currentSport === 'run' ? 'ChayBo' : (currentSport === 'bike' ? 'DapXe' : 'BoiLoi'));
-        exportToExcel(data, `FSEMI_ChiTiet_${sportName}_${week}_${team}`);
+        exportToExcel(data, "FSEMI_ChiTiet_TatCaCacMon_TungTuan");
     }
 
 </script>
