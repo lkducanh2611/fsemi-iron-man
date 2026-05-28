@@ -406,6 +406,10 @@
                         <label>Refresh Token:</label><br>
                         <input type="password" id="strava-refresh-token" placeholder="Mã refresh token..." style="width: 100%; padding: 6px; border: 1px solid #bdc3c7; border-radius: 4px;">
                     </div>
+                    <div style="grid-column: 1 / -1;">
+                        <label>Ngày Bắt Đầu Giải (Tuần 1 bắt đầu từ ngày này):</label><br>
+                        <input type="date" id="strava-tournament-start" style="width: 100%; padding: 6px; border: 1px solid #bdc3c7; border-radius: 4px;">
+                    </div>
                     <div>
                         <label>ID Group Chạy:</label><br>
                         <input type="text" id="strava-club-run" placeholder="VD: 1234567" style="width: 100%; padding: 6px; border: 1px solid #bdc3c7; border-radius: 4px;">
@@ -481,12 +485,8 @@
                         </select>
                     </div>
                     <div style="background: #fcf3cf; padding: 5px 10px; border-radius: 4px; border: 1px solid #f1c40f; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                        <strong style="color: #d35400;">Đồng bộ Strava Tuần:</strong>
-                        <label style="font-size: 12px;">Từ:</label>
-                        <input type="date" id="strava-start-date" style="padding: 4px; border-radius: 4px; border: 1px solid #ccc;">
-                        <label style="font-size: 12px;">Đến:</label>
-                        <input type="date" id="strava-end-date" style="padding: 4px; border-radius: 4px; border: 1px solid #ccc;">
-                        <button onclick="syncStrava()" style="padding: 5px 10px; background: #e67e22; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px;">🔄 Tải dữ liệu</button>
+                        <strong style="color: #d35400;">Đồng bộ dữ liệu Strava:</strong>
+                        <button onclick="syncAllStrava()" style="padding: 5px 10px; background: #e67e22; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px;">🔄 Tự Động Cập Nhật 3 Môn</button>
                     </div>
                 </div>
                 <div style="margin-top: 10px; margin-bottom: 10px; font-size: 13px;">
@@ -579,6 +579,7 @@
                 if(!db.sports[sport][wk]) db.sports[sport][wk] = {};
             }
         });
+        if (!db.processedStravaIds) db.processedStravaIds = {};
         
         // Migrate existing bonus data from number to object
         for(let w = 1; w <= TOTAL_WEEKS; w++) {
@@ -680,6 +681,7 @@
         if (stravaConfig.clientId) document.getElementById('strava-client-id').value = stravaConfig.clientId;
         if (stravaConfig.clientSecret) document.getElementById('strava-client-secret').value = stravaConfig.clientSecret;
         if (stravaConfig.refreshToken) document.getElementById('strava-refresh-token').value = stravaConfig.refreshToken;
+        if (stravaConfig.tournamentStart) document.getElementById('strava-tournament-start').value = stravaConfig.tournamentStart;
         if (stravaConfig.clubRun) document.getElementById('strava-club-run').value = stravaConfig.clubRun;
         if (stravaConfig.clubBike) document.getElementById('strava-club-bike').value = stravaConfig.clubBike;
         if (stravaConfig.clubSwim) document.getElementById('strava-club-swim').value = stravaConfig.clubSwim;
@@ -740,6 +742,7 @@
             clientId: document.getElementById('strava-client-id').value.trim(),
             clientSecret: document.getElementById('strava-client-secret').value.trim(),
             refreshToken: document.getElementById('strava-refresh-token').value.trim(),
+            tournamentStart: document.getElementById('strava-tournament-start').value,
             clubRun: document.getElementById('strava-club-run').value.trim(),
             clubBike: document.getElementById('strava-club-bike').value.trim(),
             clubSwim: document.getElementById('strava-club-swim').value.trim()
@@ -795,82 +798,82 @@
         return str.toLowerCase().trim();
     }
 
-    async function syncStrava() {
-        let startDateStr = document.getElementById('strava-start-date').value;
-        let endDateStr = document.getElementById('strava-end-date').value;
-        if (!startDateStr || !endDateStr) {
-            alert("Vui lòng chọn Từ ngày và Đến ngày để đồng bộ!");
+    async function syncAllStrava() {
+        let config = JSON.parse(localStorage.getItem('stravaConfig') || '{}');
+        if (!config.tournamentStart) {
+            alert("Vui lòng cấu hình 'Ngày Bắt Đầu Giải' ở phía trên để hệ thống tự chia tuần!");
             return;
         }
-        let startDate = new Date(startDateStr);
-        startDate.setHours(0, 0, 0, 0);
-        let endDate = new Date(endDateStr);
-        endDate.setHours(23, 59, 59, 999);
+        let tourStart = new Date(config.tournamentStart);
+        tourStart.setHours(0, 0, 0, 0);
 
-        let week = document.getElementById('week-select').value;
-        
-        let config = JSON.parse(localStorage.getItem('stravaConfig') || '{}');
         let sportClubMap = {
             'run': config.clubRun,
             'bike': config.clubBike,
             'swim': config.clubSwim
         };
-        let clubId = sportClubMap[currentSport];
-        if (!clubId) {
-            alert(`Chưa cấu hình ID Group cho môn ${currentSport === 'run' ? 'Chạy' : (currentSport === 'bike' ? 'Đạp' : 'Bơi')}!`);
-            return;
-        }
 
-        showLoading("Đang lấy dữ liệu từ Strava...");
+        showLoading("Đang lấy dữ liệu từ 3 Group Strava...");
         try {
             let accessToken = await getStravaAccessToken();
-            
-            // Lấy Activities của Club (tối đa 200, lưu ý Strava API qua endpoint club/activities ko cho lọc theo date, phải lọc manual)
-            let res = await fetch(`https://www.strava.com/api/v3/clubs/${clubId}/activities?per_page=200`, {
-                headers: { 'Authorization': `Bearer ${accessToken}` }
-            });
-            if (!res.ok) throw new Error("Không thể lấy dữ liệu hoạt động. Hãy chắc chắn ID Group đúng và bạn là thành viên.");
-            let activities = await res.json();
+            let localNames = getAllMembers();
+            let totalMapped = 0;
+            if (!db.processedStravaIds) db.processedStravaIds = {};
 
-            // Tính tổng km cho từng athlete trong khoảng thời gian
-            let athleteStats = {}; // { 'Duc Anh Nguyen': 12.5 }
-            activities.forEach(act => {
-                let actDate = new Date(act.start_date_local || act.start_date);
-                if (actDate >= startDate && actDate <= endDate) {
-                    let fullName = (act.athlete.firstname + " " + act.athlete.lastname).trim();
-                    let distKm = act.distance / 1000;
-                    if (!athleteStats[fullName]) athleteStats[fullName] = 0;
-                    athleteStats[fullName] += distKm;
-                }
-            });
+            for (let sport of ['run', 'bike', 'swim']) {
+                let clubId = sportClubMap[sport];
+                if (!clubId) continue; // Bỏ qua nếu môn này chưa nhập ID
 
-            // Map tên Strava với tên DB
-            let localNames = getAllMembers(); // Lấy tất cả tên VĐV đang có trong hệ thống
-            let mappedCount = 0;
-
-            for (let stravaName in athleteStats) {
-                let dist = athleteStats[stravaName];
+                let res = await fetch(`https://www.strava.com/api/v3/clubs/${clubId}/activities?per_page=200`, {
+                    headers: { 'Authorization': `Bearer ${accessToken}` }
+                });
                 
-                // Cố gắng tìm tên khớp (chuẩn hóa ko dấu)
-                let matchedName = localNames.find(n => removeVietnameseTones(n) === removeVietnameseTones(stravaName));
-                
-                if (matchedName) {
-                    let currentData = db.sports[currentSport][week];
-                    if (!currentData) currentData = {};
-                    let existingDist = currentData[matchedName] ? parseFloat(currentData[matchedName]) : 0;
-                    // Cộng dồn hoặc ghi đè? Mặc định Strava sẽ tính lại toàn bộ quãng đường trong tuần, nên có thể ghi đè
-                    currentData[matchedName] = parseFloat(dist.toFixed(2));
-                    db.sports[currentSport][week] = currentData;
-                    mappedCount++;
-                } else {
-                    console.log(`Không tìm thấy VĐV trên hệ thống khớp với tên Strava: ${stravaName}`);
+                if (!res.ok) {
+                    console.error(`Lỗi lấy dữ liệu môn ${sport}`);
+                    continue;
                 }
+                let activities = await res.json();
+
+                activities.forEach(act => {
+                    // Nếu activity này đã được cộng điểm rồi thì bỏ qua để tránh cộng đúp
+                    if (db.processedStravaIds[act.id]) return;
+
+                    let actDate = new Date(act.start_date_local || act.start_date);
+                    let diffTime = actDate.getTime() - tourStart.getTime();
+                    let diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                    
+                    // Nếu hoạt động diễn ra từ ngày bắt đầu giải trở đi
+                    if (diffDays >= 0) {
+                        let weekIndex = Math.floor(diffDays / 7) + 1;
+                        // Chỉ ghi nhận nếu nằm trong số tuần cho phép (1 -> 8)
+                        if (weekIndex >= 1 && weekIndex <= TOTAL_WEEKS) {
+                            let fullName = (act.athlete.firstname + " " + act.athlete.lastname).trim();
+                            let matchedName = localNames.find(n => removeVietnameseTones(n) === removeVietnameseTones(fullName));
+                            
+                            if (matchedName) {
+                                let weekKey = 'week' + weekIndex;
+                                let distKm = act.distance / 1000;
+                                
+                                let currentData = db.sports[sport][weekKey];
+                                if (!currentData) currentData = {};
+                                let existingDist = currentData[matchedName] ? parseFloat(currentData[matchedName]) : 0;
+                                
+                                currentData[matchedName] = parseFloat((existingDist + distKm).toFixed(2));
+                                db.sports[sport][weekKey] = currentData;
+                                
+                                // Đánh dấu là đã xử lý
+                                db.processedStravaIds[act.id] = true;
+                                totalMapped++;
+                            }
+                        }
+                    }
+                });
             }
 
             renderScoreTable();
-            saveDB(); // Tự động lưu và push
+            saveDB(); // Tự động lưu và push lên git
             hideLoading();
-            alert(`Đồng bộ thành công!\nĐã cập nhật dữ liệu cho ${mappedCount} VĐV.`);
+            alert(`Đồng bộ thành công!\nĐã cập nhật thêm ${totalMapped} hoạt động mới từ Strava vào bảng điểm.`);
 
         } catch (e) {
             hideLoading();
