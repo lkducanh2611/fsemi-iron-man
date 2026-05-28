@@ -238,6 +238,14 @@
 </head>
 <body>
 
+<div id="loading-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:9999; justify-content:center; align-items:center; flex-direction:column;">
+    <div style="width: 50px; height: 50px; border: 5px solid #ccc; border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+    <h3 style="margin-top:20px; color:var(--primary);" id="loading-text">Đang tải dữ liệu...</h3>
+    <style>
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+    </style>
+</div>
+
 <div class="toast" id="toast-msg">✅ Đã lưu dữ liệu thành công!</div>
 
 <header>
@@ -338,9 +346,27 @@
 
     <!-- TRANG 2: NHẬP ĐIỂM -->
     <div id="admin" class="page">
-        <div class="admin-grid">
-            <!-- Cột trái: Khai báo danh sách team -->
-            <div class="team-setup">
+        <!-- Khóa bằng mã PIN -->
+        <div id="admin-login" style="text-align: center; margin-top: 50px;">
+            <h3 style="color: var(--primary);">Nhập Mã PIN để vào trang Quản Trị</h3>
+            <input type="password" id="pin-input" placeholder="Nhập PIN..." style="padding: 10px; font-size: 16px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; width: 250px;"><br>
+            <button onclick="checkAdminPin()" style="padding: 10px 20px; font-size: 16px; background-color: var(--primary); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Xác nhận</button>
+            <p id="pin-error" style="color: red; display: none; margin-top: 10px; font-weight: bold;">Sai mã PIN!</p>
+        </div>
+
+        <!-- Nội dung admin -->
+        <div id="admin-content" style="display: none;">
+            <div style="background: #eaf2f8; padding: 15px; border-left: 5px solid #3498db; margin-bottom: 20px; border-radius: 4px;">
+                <h4 style="margin: 0 0 10px 0; color: #2980b9;">Cấu hình GitHub Token (Bắt buộc để lưu Public)</h4>
+                <input type="password" id="github-token-input" placeholder="Nhập GitHub Personal Access Token (ghp_...)" style="width: 350px; padding: 8px; border: 1px solid #bdc3c7; border-radius: 4px;">
+                <button onclick="saveGithubToken()" style="padding: 8px 15px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Lưu Token</button>
+                <span id="token-status" style="margin-left: 10px; font-size: 14px; font-weight: bold;"></span>
+                <p style="font-size: 13px; color: #555; margin-top: 8px;">* Token này chỉ lưu trên trình duyệt của bạn. Hệ thống sẽ tự động dùng nó để đẩy dữ liệu cập nhật lên `data.json` của kho lưu trữ.</p>
+            </div>
+
+            <div class="admin-grid">
+                <!-- Cột trái: Khai báo danh sách team -->
+                <div class="team-setup">
                 <h3 style="color: var(--secondary);">1. Danh Sách Nhóm</h3>
                 <div class="note">
                     Cấu trúc nhập: Dòng đầu là Tên Nhóm, các dòng sau là Tên VĐV. <br>
@@ -411,6 +437,7 @@
                 <button class="btn-save" onclick="saveSportData()" style="width: 100%; margin-top: 15px;">Lưu Thành Tích</button>
             </div>
         </div>
+        </div> <!-- End admin-content -->
     </div>
 </div>
 
@@ -452,29 +479,65 @@
                 }
             }
         }
+        }
     }
 
+    // Cấu hình GitHub
+    const GITHUB_REPO = "lkducanh2611/fsemi-iron-man";
+    const GITHUB_FILE_PATH = "data.json";
+
     // Khởi tạo
-    window.onload = function() {
-        if(localStorage.getItem('triathlonDB')) {
-            let saved = JSON.parse(localStorage.getItem('triathlonDB'));
-            db = {
-                teams: saved.teams || {},
-                classes: saved.classes || {},
-                bonusColumns: saved.bonusColumns || ['Điểm Cộng'],
-                sports: {
-                    run: (saved.sports && saved.sports.run) || {},
-                    bike: (saved.sports && saved.sports.bike) || {},
-                    swim: (saved.sports && saved.sports.swim) || {},
-                    bonus: (saved.sports && saved.sports.bonus) || {}
-                }
-            };
+    window.onload = async function() {
+        showLoading("Đang đồng bộ dữ liệu Public...");
+        try {
+            let res = await fetch(`https://raw.githubusercontent.com/${GITHUB_REPO}/main/${GITHUB_FILE_PATH}?t=${Date.now()}`);
+            if (res.ok) {
+                let saved = await res.json();
+                db = {
+                    teams: saved.teams || {},
+                    classes: saved.classes || {},
+                    bonusColumns: saved.bonusColumns || ['Điểm Cộng'],
+                    sports: {
+                        run: (saved.sports && saved.sports.run) || {},
+                        bike: (saved.sports && saved.sports.bike) || {},
+                        swim: (saved.sports && saved.sports.swim) || {},
+                        bonus: (saved.sports && saved.sports.bonus) || {}
+                    }
+                };
+                localStorage.setItem('triathlonDB', JSON.stringify(db)); // backup
+            }
+        } catch (e) {
+            console.error("Lỗi tải dữ liệu Public, dùng dữ liệu Local", e);
+            if(localStorage.getItem('triathlonDB')) {
+                let saved = JSON.parse(localStorage.getItem('triathlonDB'));
+                db = {
+                    teams: saved.teams || {},
+                    classes: saved.classes || {},
+                    bonusColumns: saved.bonusColumns || ['Điểm Cộng'],
+                    sports: {
+                        run: (saved.sports && saved.sports.run) || {},
+                        bike: (saved.sports && saved.sports.bike) || {},
+                        swim: (saved.sports && saved.sports.swim) || {},
+                        bonus: (saved.sports && saved.sports.bonus) || {}
+                    }
+                };
+            }
         }
+        hideLoading();
+
         ensureWeeks();
         renderTeamInput();
         renderScoreTable();
         updateLeaderboard();
         
+        // Phục hồi Token
+        let token = localStorage.getItem('ghToken');
+        if (token) {
+            document.getElementById('github-token-input').value = token;
+            document.getElementById('token-status').innerText = "✅ Đã cấu hình";
+            document.getElementById('token-status').style.color = "green";
+        }
+
         // Gắn sự kiện paste thông minh cho vùng bảng
         let container = document.getElementById('score-table-container');
         if(container) {
@@ -490,10 +553,96 @@
         setTimeout(() => toast.classList.remove('show'), 2500);
     }
 
+    function showLoading(text) {
+        document.getElementById('loading-text').innerText = text;
+        document.getElementById('loading-overlay').style.display = 'flex';
+    }
+    function hideLoading() {
+        document.getElementById('loading-overlay').style.display = 'none';
+    }
+
+    function checkAdminPin() {
+        let pin = document.getElementById('pin-input').value;
+        if (pin === 'fsemiironman2026') {
+            document.getElementById('admin-login').style.display = 'none';
+            document.getElementById('admin-content').style.display = 'block';
+            document.getElementById('pin-error').style.display = 'none';
+        } else {
+            document.getElementById('pin-error').style.display = 'block';
+        }
+    }
+
+    function saveGithubToken() {
+        let token = document.getElementById('github-token-input').value.trim();
+        if (token) {
+            localStorage.setItem('ghToken', token);
+            document.getElementById('token-status').innerText = "✅ Đã lưu";
+            document.getElementById('token-status').style.color = "green";
+        } else {
+            localStorage.removeItem('ghToken');
+            document.getElementById('token-status').innerText = "❌ Đã xóa";
+            document.getElementById('token-status').style.color = "red";
+        }
+    }
+
+    async function pushToGitHub(dbObj) {
+        let token = localStorage.getItem('ghToken');
+        if (!token) return true;
+        
+        showLoading("Đang đẩy dữ liệu lên Public Server...");
+        try {
+            let getRes = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE_PATH}?t=${Date.now()}`, {
+                headers: { 'Authorization': `token ${token}` }
+            });
+            let sha = "";
+            if (getRes.ok) {
+                let fileData = await getRes.json();
+                sha = fileData.sha;
+            }
+
+            let contentStr = JSON.stringify(dbObj, null, 2);
+            let base64Content = btoa(unescape(encodeURIComponent(contentStr)));
+
+            let putRes = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE_PATH}`, {
+                method: 'PUT',
+                headers: { 
+                    'Authorization': `token ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    message: "Cập nhật dữ liệu " + new Date().toLocaleString(),
+                    content: base64Content,
+                    sha: sha || undefined
+                })
+            });
+
+            hideLoading();
+            if (putRes.ok) {
+                return true;
+            } else {
+                let err = await putRes.json();
+                alert("Lỗi GitHub: " + err.message);
+                return false;
+            }
+        } catch(e) {
+            hideLoading();
+            alert("Lỗi mạng khi lưu GitHub: " + e.message);
+            return false;
+        }
+    }
+
     // Lưu DB
-    function saveDB() {
+    async function saveDB() {
         localStorage.setItem('triathlonDB', JSON.stringify(db));
         updateLeaderboard();
+        
+        let token = localStorage.getItem('ghToken');
+        if (token) {
+            let success = await pushToGitHub(db);
+            if(success) showToast('Đã lưu dữ liệu Public thành công!');
+        } else {
+            showToast('Chỉ lưu dữ liệu cục bộ (Chưa cấu hình Token)!');
+        }
     }
 
     // Chuyển trang
