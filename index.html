@@ -254,7 +254,7 @@
     <!-- TRANG 1: BXH ĐỒNG ĐỘI -->
     <div id="leaderboard-team" class="page active">
         <h3 style="text-align: center; color: var(--secondary);">BẢNG XẾP HẠNG ĐỒNG ĐỘI</h3>
-        <p style="text-align: center; font-size: 14px; color: #666;">Công thức: (Chạy x 2.5) + (Đạp x 1) + (Bơi x 20)</p>
+        <p style="text-align: center; font-size: 14px; color: #666;">Công thức: (Chạy x 2.5) + (Đạp x 1) + (Bơi x 20) + (Bonus x 1)</p>
         <table>
             <thead>
                 <tr>
@@ -264,6 +264,7 @@
                     <th>Tổng Chạy (km)</th>
                     <th>Tổng Đạp (km)</th>
                     <th>Tổng Bơi (km)</th>
+                    <th>Bonus</th>
                 </tr>
             </thead>
             <tbody id="leaderboard-body">
@@ -274,17 +275,19 @@
     <!-- TRANG 2: BXH CÁ NHÂN -->
     <div id="leaderboard-ind" class="page">
         <h3 style="text-align: center; color: var(--secondary);">BẢNG XẾP HẠNG CÁ NHÂN</h3>
-        <p style="text-align: center; font-size: 14px; color: #666;">Công thức: (Chạy x 2.5) + (Đạp x 1) + (Bơi x 20)</p>
+        <p style="text-align: center; font-size: 14px; color: #666;">Công thức: (Chạy x 2.5) + (Đạp x 1) + (Bơi x 20) + (Bonus x 1)</p>
         <table>
             <thead>
                 <tr>
                     <th>Hạng</th>
                     <th>Tên VĐV</th>
+                    <th>Hạng VĐV</th>
                     <th>Đội</th>
                     <th>Tổng Điểm</th>
                     <th>Tổng Chạy (km)</th>
                     <th>Tổng Đạp (km)</th>
                     <th>Tổng Bơi (km)</th>
+                    <th>Bonus</th>
                 </tr>
             </thead>
             <tbody id="individual-leaderboard-body">
@@ -299,9 +302,11 @@
             <div class="team-setup">
                 <h3 style="color: var(--secondary);">1. Danh Sách Nhóm</h3>
                 <div class="note">
-                    Cấu trúc nhập: Dòng đầu là Tên Nhóm, các dòng sau là Tên VĐV. Cách nhau 1 dòng trắng giữa các nhóm.<br>
+                    Cấu trúc nhập: Dòng đầu là Tên Nhóm, các dòng sau là Tên VĐV. <br>
+                    Có thể khai báo hạng (A, B, C, D) phía sau tên, cách nhau bởi dấu gạch ngang (Ví dụ: <strong>Tran Diep - A</strong>).<br>
+                    Cách nhau 1 dòng trắng giữa các nhóm.<br>
                     Ví dụ:<br>
-                    Team A<br>Tran Diep<br>Nguyen Van B<br><br>Team B<br>Le Thi C
+                    Team A<br>Tran Diep - A<br>Nguyen Van B - C<br><br>Team B<br>Le Thi C
                 </div>
                 <textarea id="team-input" placeholder="Nhập danh sách nhóm tại đây..."></textarea>
                 <button class="btn-save" onclick="saveTeams()" style="width: 100%; margin-top: 10px;">Lưu Danh Sách Nhóm</button>
@@ -316,6 +321,7 @@
                     <button class="tab-btn active" onclick="switchSport('run', this)">🏃 Chạy Bộ (x2.5)</button>
                     <button class="tab-btn" onclick="switchSport('bike', this)">🚴 Đạp Xe (x1)</button>
                     <button class="tab-btn" onclick="switchSport('swim', this)">🏊 Bơi Lội (x20)</button>
+                    <button class="tab-btn" style="color: #e67e22;" onclick="switchSport('bonus', this)">⭐ Bonus (x1)</button>
                 </div>
                 
                 <!-- Chọn tuần và Đội -->
@@ -372,10 +378,12 @@
     // Dữ liệu ban đầu
     let db = {
         teams: {},
+        classes: {},
         sports: {
             run: {},
             bike: {},
-            swim: {}
+            swim: {},
+            bonus: {}
         }
     };
 
@@ -383,7 +391,7 @@
 
     // Đảm bảo cấu trúc tuần tồn tại
     function ensureWeeks() {
-        ['run', 'bike', 'swim'].forEach(sport => {
+        ['run', 'bike', 'swim', 'bonus'].forEach(sport => {
             if(!db.sports[sport]) db.sports[sport] = {};
             for(let w = 1; w <= TOTAL_WEEKS; w++) {
                 let wk = 'week' + w;
@@ -395,7 +403,17 @@
     // Khởi tạo
     window.onload = function() {
         if(localStorage.getItem('triathlonDB')) {
-            db = JSON.parse(localStorage.getItem('triathlonDB'));
+            let saved = JSON.parse(localStorage.getItem('triathlonDB'));
+            db = {
+                teams: saved.teams || {},
+                classes: saved.classes || {},
+                sports: {
+                    run: (saved.sports && saved.sports.run) || {},
+                    bike: (saved.sports && saved.sports.bike) || {},
+                    swim: (saved.sports && saved.sports.swim) || {},
+                    bonus: (saved.sports && saved.sports.bonus) || {}
+                }
+            };
         }
         ensureWeeks();
         renderTeamInput();
@@ -446,26 +464,51 @@
         let text = document.getElementById('team-input').value;
         let blocks = text.split(/\n\s*\n/);
         db.teams = {};
+        db.classes = {};
         
         blocks.forEach(block => {
             let lines = block.split('\n').map(l => l.trim()).filter(l => l !== '');
             if(lines.length > 0) {
                 let teamName = lines[0];
-                let members = lines.slice(1);
+                let members = [];
+                for(let i = 1; i < lines.length; i++) {
+                    let line = lines[i];
+                    // Phân tích "Tên - Hạng"
+                    let match = line.match(/^(.*?)(?:\s*[-,\(:]\s*([A-Da-d])\)?)$/);
+                    let name = line;
+                    let cls = '';
+                    if (match) {
+                        name = match[1].trim();
+                        cls = match[2].toUpperCase();
+                    }
+                    if (name) {
+                        members.push(name);
+                        if (cls) db.classes[name] = cls;
+                    }
+                }
                 db.teams[teamName] = members;
             }
         });
         ensureWeeks();
         saveDB();
         renderScoreTable();
-        showToast('Đã lưu danh sách nhóm!');
+        showToast('Đã lưu danh sách nhóm và hạng VĐV!');
     }
 
     // Render danh sách team vào textarea
     function renderTeamInput() {
         let text = "";
         for (const [teamName, members] of Object.entries(db.teams)) {
-            text += teamName + "\n" + members.join("\n") + "\n\n";
+            let lines = [teamName];
+            members.forEach(m => {
+                let cls = db.classes[m];
+                if (cls) {
+                    lines.push(`${m} - ${cls}`);
+                } else {
+                    lines.push(m);
+                }
+            });
+            text += lines.join("\n") + "\n\n";
         }
         document.getElementById('team-input').value = text.trim();
         updateTeamFilter();
@@ -883,21 +926,21 @@
 
         // Khởi tạo
         for (const [teamName, members] of Object.entries(db.teams)) {
-            teamStats[teamName] = { run: 0, bike: 0, swim: 0 };
+            teamStats[teamName] = { run: 0, bike: 0, swim: 0, bonus: 0 };
             members.forEach(m => {
-                individualStats[m] = { name: m, team: teamName, run: 0, bike: 0, swim: 0 };
+                individualStats[m] = { name: m, team: teamName, cls: db.classes[m] || '', run: 0, bike: 0, swim: 0, bonus: 0 };
             });
         }
 
         // Duyệt dữ liệu
-        for (let sport of ['run', 'bike', 'swim']) {
+        for (let sport of ['run', 'bike', 'swim', 'bonus']) {
             for (let w = 1; w <= TOTAL_WEEKS; w++) {
                 let wk = 'week' + w;
                 let data = db.sports[sport][wk] || {};
                 for (const [name, val] of Object.entries(data)) {
                     if (!individualStats[name]) {
-                        individualStats[name] = { name: name, team: 'Tự do', run: 0, bike: 0, swim: 0 };
-                        if (!teamStats['Tự do']) teamStats['Tự do'] = { run: 0, bike: 0, swim: 0 };
+                        individualStats[name] = { name: name, team: 'Tự do', cls: db.classes[name] || '', run: 0, bike: 0, swim: 0, bonus: 0 };
+                        if (!teamStats['Tự do']) teamStats['Tự do'] = { run: 0, bike: 0, swim: 0, bonus: 0 };
                     }
                     individualStats[name][sport] += val;
                     if(individualStats[name].team !== 'Tự do') {
@@ -913,9 +956,9 @@
         let teamResults = [];
         for (const [tName, stat] of Object.entries(teamStats)) {
             if (tName === 'Tự do') continue; // Bỏ qua đội Tự do
-            let score = (stat.run * 2.5) + (stat.bike * 1) + (stat.swim * 20);
+            let score = (stat.run * 2.5) + (stat.bike * 1) + (stat.swim * 20) + (stat.bonus * 1);
             if (score > 0) {
-                teamResults.push({ team: tName, run: stat.run, bike: stat.bike, swim: stat.swim, score: score });
+                teamResults.push({ team: tName, run: stat.run, bike: stat.bike, swim: stat.swim, bonus: stat.bonus, score: score });
             }
         }
         teamResults.sort((a, b) => b.score - a.score);
@@ -924,9 +967,9 @@
         let indResults = [];
         for (const [iName, stat] of Object.entries(individualStats)) {
             if (stat.team === 'Tự do') continue; // Bỏ qua các VĐV ngoài danh sách khai báo
-            let score = (stat.run * 2.5) + (stat.bike * 1) + (stat.swim * 20);
+            let score = (stat.run * 2.5) + (stat.bike * 1) + (stat.swim * 20) + (stat.bonus * 1);
             if (score > 0) {
-                indResults.push({ name: stat.name, team: stat.team, run: stat.run, bike: stat.bike, swim: stat.swim, score: score });
+                indResults.push({ name: stat.name, team: stat.team, cls: stat.cls, run: stat.run, bike: stat.bike, swim: stat.swim, bonus: stat.bonus, score: score });
             }
         }
         indResults.sort((a, b) => b.score - a.score);
@@ -946,6 +989,7 @@
                 <td>${res.run.toFixed(2)}</td>
                 <td>${res.bike.toFixed(2)}</td>
                 <td>${res.swim.toFixed(2)}</td>
+                <td style="color: #e67e22; font-weight: bold;">+${res.bonus.toFixed(2)}</td>
             </tr>`;
             teamBody.innerHTML += tr;
         });
@@ -958,14 +1002,18 @@
             else if(index === 1) { rankClass = 'rank-2'; rankText = '🥈 2'; }
             else if(index === 2) { rankClass = 'rank-3'; rankText = '🥉 3'; }
 
+            let clsBadge = res.cls ? `<span style="background:#3498db; color:white; padding: 2px 6px; border-radius: 4px; font-size:12px; font-weight:bold;">${escapeHtml(res.cls)}</span>` : '';
+
             let tr = `<tr>
                 <td class="${rankClass}">${rankText}</td>
                 <td style="font-weight: bold; color: var(--secondary);">${escapeHtml(res.name)}</td>
+                <td style="text-align: center;">${clsBadge}</td>
                 <td>${escapeHtml(res.team)}</td>
                 <td style="font-weight: bold; color: var(--primary); font-size: 1.1em;">${res.score.toFixed(2)}</td>
                 <td>${res.run.toFixed(2)}</td>
                 <td>${res.bike.toFixed(2)}</td>
                 <td>${res.swim.toFixed(2)}</td>
+                <td style="color: #e67e22; font-weight: bold;">+${res.bonus.toFixed(2)}</td>
             </tr>`;
             indBody.innerHTML += tr;
         });
