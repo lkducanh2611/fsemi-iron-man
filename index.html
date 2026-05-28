@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Xếp Hạng 3 Môn Phối Hợp</title>
+    <style>
+        :root {
+            --primary: #f26522; /* Màu cam FPT */
+            --secondary: #103f91; /* Màu xanh FPT */
+            --bg-color: #f4f7f6;
+            --box-bg: #ffffff;
+            --text-color: #333;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 0; }
+        header { background-color: var(--secondary); color: white; padding: 15px 20px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        nav { display: flex; justify-content: center; background-color: white; border-bottom: 1px solid #ddd; }
+        nav button { background: none; border: none; padding: 15px 30px; font-size: 16px; font-weight: bold; cursor: pointer; color: #555; transition: 0.3s; }
+        nav button.active { border-bottom: 3px solid var(--primary); color: var(--primary); }
+        nav button:hover { color: var(--primary); }
+        
+        .container { max-width: 1000px; margin: 30px auto; padding: 20px; background: var(--box-bg); border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+        .page { display: none; }
+        .page.active { display: block; }
+
+        /* Bảng xếp hạng */
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: center; border-bottom: 1px solid #ddd; }
+        th { background-color: var(--secondary); color: white; }
+        tr:hover { background-color: #f1f1f1; }
+        .rank-1 { font-weight: bold; color: gold; font-size: 1.2em; text-shadow: 1px 1px 1px #000; }
+        .rank-2 { font-weight: bold; color: silver; font-size: 1.1em;}
+        .rank-3 { font-weight: bold; color: #cd7f32; font-size: 1.1em;}
+
+        /* Form Nhập Liệu */
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tabs button { padding: 10px 20px; border: 1px solid #ddd; background: #eee; cursor: pointer; border-radius: 5px; }
+        .tabs button.active { background: var(--primary); color: white; border-color: var(--primary); }
+        
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-weight: bold; margin-bottom: 8px; }
+        textarea { width: 100%; height: 200px; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-family: monospace; resize: vertical; box-sizing: border-box; }
+        select { padding: 10px; border-radius: 5px; border: 1px solid #ccc; margin-bottom: 10px; width: 100%; font-size: 16px;}
+        .btn-save { background-color: var(--primary); color: white; border: none; padding: 12px 25px; font-size: 16px; border-radius: 5px; cursor: pointer; transition: 0.3s; font-weight: bold; }
+        .btn-save:hover { background-color: #d1551a; }
+        .note { font-size: 0.9em; color: #666; font-style: italic; margin-bottom: 10px; }
+        
+        .admin-grid { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
+        @media (max-width: 768px) { .admin-grid { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body>
+
+<header>
+    <h2>Giải Thể Thao 3 Môn Phối Hợp</h2>
+</header>
+
+<nav>
+    <button class="nav-btn active" onclick="switchPage('leaderboard')">Bảng Xếp Hạng</button>
+    <button class="nav-btn" onclick="switchPage('admin')">Nhập Điểm (Admin)</button>
+</nav>
+
+<div class="container">
+    <!-- TRANG 1: BẢNG XẾP HẠNG -->
+    <div id="leaderboard" class="page active">
+        <h3 style="text-align: center; color: var(--secondary);">BẢNG XẾP HẠNG ĐỒNG ĐỘI</h3>
+        <p style="text-align: center; font-size: 14px; color: #666;">Công thức: (Chạy x 2.5) + (Đạp x 1) + (Bơi x 20)</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Hạng</th>
+                    <th>Tên Nhóm</th>
+                    <th>Tổng Điểm</th>
+                    <th>Tổng Chạy (km)</th>
+                    <th>Tổng Đạp (km)</th>
+                    <th>Tổng Bơi (km)</th>
+                </tr>
+            </thead>
+            <tbody id="leaderboard-body">
+                <!-- Data render từ JS -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- TRANG 2: NHẬP ĐIỂM -->
+    <div id="admin" class="page">
+        <div class="admin-grid">
+            <!-- Cột trái: Khai báo danh sách team -->
+            <div class="team-setup">
+                <h3 style="color: var(--secondary);">1. Danh Sách Nhóm</h3>
+                <div class="note">
+                    Cấu trúc nhập: Dòng đầu là Tên Nhóm, các dòng sau là Tên VĐV. Cách nhau 1 dòng trắng giữa các nhóm.<br>
+                    Ví dụ:<br>
+                    Team A<br>Tran Diep<br>Nguyen Van B<br><br>Team B<br>Le Thi C
+                </div>
+                <textarea id="team-input" placeholder="Nhập danh sách nhóm tại đây..."></textarea>
+                <button class="btn-save" onclick="saveTeams()" style="width: 100%; margin-top: 10px;">Lưu Danh Sách Nhóm</button>
+            </div>
+
+            <!-- Cột phải: Nhập thành tích -->
+            <div class="score-setup">
+                <h3 style="color: var(--secondary);">2. Nhập Thành Tích</h3>
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchSport('run', this)">Chạy Bộ (x2.5)</button>
+                    <button class="tab-btn" onclick="switchSport('bike', this)">Đạp Xe (x1)</button>
+                    <button class="tab-btn" onclick="switchSport('swim', this)">Bơi Lội (x20)</button>
+                </div>
+                
+                <div class="form-group">
+                    <label>Chọn Tuần Nhập Liệu:</label>
+                    <select id="week-select" onchange="loadSportData()">
+                        <option value="week1">Tuần 1</option>
+                        <option value="week2">Tuần 2</option>
+                        <option value="week3">Tuần 3</option>
+                        <option value="week4">Tuần 4</option>
+                        <option value="week5">Tuần 5</option>
+                        <option value="week6">Tuần 6</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Dữ liệu (Tên | Số km):</label>
+                    <div class="note">Ví dụ: Tran Diep | 31.0 km</div>
+                    <textarea id="score-input" placeholder="Paste dữ liệu từ excel vào đây..."></textarea>
+                </div>
+                
+                <button class="btn-save" onclick="saveSportData()">Lưu Thành Tích Bảng Này</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Dữ liệu mẫu ban đầu để trống
+    let db = {
+        teams: {}, // Format: { "Team A": ["Tran Diep", "Nguyen B"], ... }
+        sports: {
+            run: { week1: {}, week2: {}, week3: {}, week4: {}, week5: {}, week6: {} },
+            bike: { week1: {}, week2: {}, week3: {}, week4: {}, week5: {}, week6: {} },
+            swim: { week1: {}, week2: {}, week3: {}, week4: {}, week5: {}, week6: {} }
+        }
+    };
+
+    let currentSport = 'run';
+
+    // Khởi tạo và load dữ liệu từ trình duyệt
+    window.onload = function() {
+        if(localStorage.getItem('triathlonDB')) {
+            db = JSON.parse(localStorage.getItem('triathlonDB'));
+        }
+        renderTeamInput();
+        loadSportData();
+        updateLeaderboard();
+    }
+
+    // Lưu DB vào LocalStorage
+    function saveDB() {
+        localStorage.setItem('triathlonDB', JSON.stringify(db));
+        updateLeaderboard();
+        alert("Đã lưu dữ liệu thành công!");
+    }
+
+    // Chuyển trang (Bảng xếp hạng / Admin)
+    function switchPage(pageId) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+        event.target.classList.add('active');
+        if(pageId === 'leaderboard') updateLeaderboard();
+    }
+
+    // Chuyển tab Môn thi đấu
+    function switchSport(sport, btn) {
+        currentSport = sport;
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        loadSportData();
+    }
+
+    // Lưu danh sách team từ text area
+    function saveTeams() {
+        let text = document.getElementById('team-input').value;
+        let blocks = text.split(/\n\s*\n/); // Tách các team bởi dòng trống
+        db.teams = {};
+        
+        blocks.forEach(block => {
+            let lines = block.split('\n').map(l => l.trim()).filter(l => l !== '');
+            if(lines.length > 0) {
+                let teamName = lines[0];
+                let members = lines.slice(1);
+                db.teams[teamName] = members;
+            }
+        });
+        saveDB();
+    }
+
+    // Hiển thị lại danh sách team đã lưu ra text area
+    function renderTeamInput() {
+        let text = "";
+        for (const [teamName, members] of Object.entries(db.teams)) {
+            text += teamName + "\n" + members.join("\n") + "\n\n";
+        }
+        document.getElementById('team-input').value = text.trim();
+    }
+
+    // Đọc dữ liệu của môn và tuần hiện tại đưa vào textarea
+    function loadSportData() {
+        let week = document.getElementById('week-select').value;
+        let data = db.sports[currentSport][week] || {};
+        let text = "";
+        for (const [name, distance] of Object.entries(data)) {
+            text += `${name} | ${distance} km\n`;
+        }
+        document.getElementById('score-input').value = text.trim();
+    }
+
+    // Lưu dữ liệu điểm từ textarea
+    function saveSportData() {
+        let week = document.getElementById('week-select').value;
+        let text = document.getElementById('score-input').value;
+        let lines = text.split('\n').map(l => l.trim()).filter(l => l !== '');
+        
+        let newData = {};
+        lines.forEach(line => {
+            if(line.includes('|')) {
+                let parts = line.split('|');
+                let name = parts[0].trim();
+                // Lọc bỏ các chữ cái, chỉ giữ lại số và dấu chấm thập phân
+                let distanceStr = parts[1].replace(/[^\d.]/g, '').trim(); 
+                let distance = parseFloat(distanceStr);
+                if(!isNaN(distance)) {
+                    newData[name] = distance;
+                }
+            }
+        });
+
+        db.sports[currentSport][week] = newData;
+        saveDB();
+    }
+
+    // Tính toán và cập nhật Bảng xếp hạng
+    function updateLeaderboard() {
+        let tbody = document.getElementById('leaderboard-body');
+        tbody.innerHTML = '';
+
+        let results = [];
+
+        // Duyệt qua từng Team
+        for (const [teamName, members] of Object.entries(db.teams)) {
+            let teamRun = 0, teamBike = 0, teamSwim = 0;
+
+            members.forEach(member => {
+                // Cộng dồn 6 tuần cho mỗi môn
+                for(let w=1; w<=6; w++) {
+                    let wk = 'week' + w;
+                    teamRun += db.sports.run[wk][member] || 0;
+                    teamBike += db.sports.bike[wk][member] || 0;
+                    teamSwim += db.sports.swim[wk][member] || 0;
+                }
+            });
+
+            // Tính tổng điểm
+            let totalScore = (teamRun * 2.5) + (teamBike * 1) + (teamSwim * 20);
+            
+            results.push({
+                team: teamName,
+                run: teamRun.toFixed(2),
+                bike: teamBike.toFixed(2),
+                swim: teamSwim.toFixed(2),
+                score: totalScore.toFixed(2)
+            });
+        }
+
+        // Sắp xếp điểm từ cao xuống thấp
+        results.sort((a, b) => b.score - a.score);
+
+        // Render ra bảng
+        results.forEach((res, index) => {
+            let rankClass = '';
+            let rankText = index + 1;
+            if(index === 0) { rankClass = 'rank-1'; rankText = '🥇 1'; }
+            else if(index === 1) { rankClass = 'rank-2'; rankText = '🥈 2'; }
+            else if(index === 2) { rankClass = 'rank-3'; rankText = '🥉 3'; }
+
+            let tr = `<tr>
+                <td class="${rankClass}">${rankText}</td>
+                <td style="font-weight: bold; color: var(--secondary);">${res.team}</td>
+                <td style="font-weight: bold; color: var(--primary); font-size: 1.1em;">${res.score}</td>
+                <td>${res.run}</td>
+                <td>${res.bike}</td>
+                <td>${res.swim}</td>
+            </tr>`;
+            tbody.innerHTML += tr;
+        });
+    }
+</script>
+
+</body>
+</html>
