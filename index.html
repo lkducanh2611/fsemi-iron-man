@@ -434,7 +434,10 @@
                     <button class="btn-add-col" id="btn-add-bonus-col" onclick="addBonusColumn()" style="display: none; background: #e67e22; border: none; border-radius: 4px; color: white; cursor: pointer; padding: 0 10px; font-weight: bold;">+ Thêm Cột Bonus</button>
                 </div>
                 
-                <button class="btn-save" onclick="saveSportData()" style="width: 100%; margin-top: 15px;">Lưu Thành Tích</button>
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button class="btn-save" onclick="saveSportData()" style="flex: 7;">Lưu Thành Tích</button>
+                    <button onclick="resetSportData()" style="flex: 3; background: #e74c3c; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; padding: 10px;">Làm Lại (Reset)</button>
+                </div>
             </div>
         </div>
         </div> <!-- End admin-content -->
@@ -1180,12 +1183,25 @@
     // Lưu dữ liệu điểm từ bảng ô
     function saveSportData() {
         let week = document.getElementById('week-select').value;
-
-        // Xóa dữ liệu cũ của tuần này và ghi lại từ bảng
-        db.sports[currentSport][week] = {};
-
         let cols = currentSport === 'bonus' ? db.bonusColumns : ['score'];
         let rows = document.querySelectorAll('#score-table tbody tr');
+
+        // Thu thập những người đang hiển thị trên bảng
+        let visibleNames = [];
+        rows.forEach(row => {
+            let nameInput = row.querySelector('.input-name');
+            if (nameInput) {
+                let name = nameInput.value.trim();
+                if (name) visibleNames.push(name);
+            }
+        });
+
+        // Xóa những người hiện tại đang được hiển thị khỏi db (để cập nhật lại hoặc xoá hẳn nếu bỏ trống input)
+        visibleNames.forEach(name => {
+            if (db.sports[currentSport][week][name] !== undefined) {
+                delete db.sports[currentSport][week][name];
+            }
+        });
 
         rows.forEach(row => {
             let nameInput = row.querySelector('.input-name');
@@ -1220,6 +1236,17 @@
 
         saveDB();
         showToast('Đã lưu thành tích thành công!');
+    }
+
+    // Nút Reset dữ liệu của Môn + Tuần hiện tại
+    function resetSportData() {
+        if (confirm("⚠️ BẠN CÓ CHẮC CHẮN MUỐN XÓA? \n\nHành động này sẽ xóa toàn bộ dữ liệu của " + (currentSport === 'bonus' ? "Môn Bonus" : (currentSport === 'run' ? "Môn Chạy Bộ" : (currentSport === 'bike' ? "Môn Đạp Xe" : "Môn Bơi Lội"))) + " trong " + document.getElementById('week-select').options[document.getElementById('week-select').selectedIndex].text + ".\n\nHành động này không thể hoàn tác!")) {
+            let week = document.getElementById('week-select').value;
+            db.sports[currentSport][week] = {};
+            saveDB();
+            renderScoreTable();
+            showToast("Đã reset dữ liệu thành công!");
+        }
     }
 
     function escapeHtml(unsafe) {
