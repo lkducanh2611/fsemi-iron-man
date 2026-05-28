@@ -219,8 +219,8 @@
             font-weight: 600;
         }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/cpexcel.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
 
@@ -426,10 +426,7 @@
         let week = document.getElementById('week-select').value;
         let sportData = db.sports[currentSport][week] || {};
 
-        // Lấy danh sách tên từ dữ liệu đã lưu của tuần/môn này
         let existingNames = Object.keys(sportData);
-
-        // Lấy tất cả thành viên từ các đội
         let allMembers = [];
         for (const [teamName, members] of Object.entries(db.teams)) {
             members.forEach(m => {
@@ -437,18 +434,16 @@
             });
         }
 
-        // Gộp: ưu tiên thành viên đội, thêm tên có dữ liệu nhưng chưa nằm trong đội
         let displayNames = [...allMembers];
         existingNames.forEach(name => {
             if(!displayNames.includes(name)) displayNames.push(name);
         });
 
-        // Nếu chưa có ai thì tạo vài dòng trống
         if(displayNames.length === 0) {
             displayNames = ['', '', '', '', ''];
         }
 
-        let html = `<table class="score-table" id="score-table">
+        let tableHTML = `<table class="score-table" id="score-table">
             <thead>
                 <tr>
                     <th style="width:35px">STT</th>
@@ -459,32 +454,33 @@
             </thead>
             <tbody>`;
 
+        let rowData = [];
         displayNames.forEach((name, idx) => {
             let val = sportData[name] !== undefined ? sportData[name] : '';
-            html += buildRow(idx, name, val);
+            tableHTML += buildRowHTML(idx);
+            rowData.push({name, val});
         });
 
-        html += `</tbody></table>`;
-        container.innerHTML = html;
+        tableHTML += `</tbody></table>`;
+        container.innerHTML = tableHTML;
+
+        // Gán value trực tiếp bằng DOM để tránh lỗi font/ký tự đặc biệt
+        let trs = container.querySelectorAll('tbody tr');
+        trs.forEach((tr, idx) => {
+            tr.querySelector('.input-name').value = rowData[idx].name;
+            tr.querySelector('.input-score').value = rowData[idx].val;
+        });
     }
 
-    // Tạo HTML cho 1 dòng bảng
-    function buildRow(idx, name, val) {
+    // Tạo HTML cho 1 dòng bảng (chưa có value)
+    function buildRowHTML(idx) {
         return `<tr>
             <td class="stt">${idx + 1}</td>
             <td>
-                <input type="text" 
-                       class="input-name" 
-                       value="${name}" 
-                       placeholder="Nhập tên VĐV...">
+                <input type="text" class="input-name" placeholder="Nhập tên VĐV...">
             </td>
             <td>
-                <input type="number" 
-                       class="input-score" 
-                       value="${val}" 
-                       placeholder="0.0" 
-                       step="0.01" 
-                       min="0">
+                <input type="number" class="input-score" placeholder="0.0" step="0.01" min="0">
             </td>
             <td style="text-align:center;">
                 <button class="btn-remove" onclick="removeRow(this)" title="Xóa dòng">✕</button>
@@ -504,24 +500,15 @@
         tr.innerHTML = `
             <td class="stt">${rowCount + 1}</td>
             <td>
-                <input type="text" 
-                       class="input-name" 
-                       value="" 
-                       placeholder="Nhập tên VĐV...">
+                <input type="text" class="input-name" value="" placeholder="Nhập tên VĐV...">
             </td>
             <td>
-                <input type="number" 
-                       class="input-score" 
-                       value="" 
-                       placeholder="0.0" 
-                       step="0.01" 
-                       min="0">
+                <input type="number" class="input-score" value="" placeholder="0.0" step="0.01" min="0">
             </td>
             <td style="text-align:center;">
                 <button class="btn-remove" onclick="removeRow(this)" title="Xóa dòng">✕</button>
             </td>`;
         tbody.appendChild(tr);
-        // Focus vào ô tên mới
         tr.querySelector('.input-name').focus();
     }
 
@@ -536,47 +523,53 @@
         });
     }
 
-    // Escape HTML để tránh lỗi khi tên chứa ký tự đặc biệt
-    function escapeHtml(str) {
-        let div = document.createElement('div');
-        div.textContent = str;
-        return div.innerHTML;
-    }
-
     // Xử lý upload file Excel (hỗ trợ tiếng Việt có dấu)
     function handleExcelUpload(event) {
         let file = event.target.files[0];
         if(!file) return;
 
-        // Hiển thị tên file
         document.getElementById('upload-filename').textContent = '📄 ' + file.name;
 
         let fileName = file.name.toLowerCase();
         let isCSV = fileName.endsWith('.csv');
 
         if(isCSV) {
-            // CSV: đọc bằng UTF-8 text
+            // Đọc CSV: thử UTF-8 trước
             let reader = new FileReader();
             reader.onload = function(e) {
-                try {
-                    let csvText = e.target.result;
-                    let workbook = XLSX.read(csvText, { type: 'string', codepage: 65001 });
-                    processWorkbook(workbook);
-                } catch(err) {
-                    showToast('Lỗi đọc file CSV! Kiểm tra lại định dạng.');
-                    console.error(err);
+                let csvText = e.target.result;
+                // Nếu text bị lỗi unicode (ký tự ) thì đọc lại bằng windows-1258 (Excel VN ANSI)
+                if (csvText.includes('')) {
+                    let reader1258 = new FileReader();
+                    reader1258.onload = function(e1258) {
+                        try {
+                            let workbook = XLSX.read(e1258.target.result, { type: 'string', raw: true });
+                            processWorkbook(workbook);
+                        } catch(err) {
+                            showToast('Lỗi đọc file CSV!');
+                            console.error(err);
+                        }
+                    };
+                    reader1258.readAsText(file, 'windows-1258');
+                } else {
+                    try {
+                        let workbook = XLSX.read(csvText, { type: 'string', raw: true });
+                        processWorkbook(workbook);
+                    } catch(err) {
+                        showToast('Lỗi đọc file CSV!');
+                        console.error(err);
+                    }
                 }
             };
             reader.readAsText(file, 'UTF-8');
         } else {
-            // Excel (.xlsx, .xls): đọc binary
+            // Excel (.xlsx, .xls)
             let reader = new FileReader();
             reader.onload = function(e) {
                 try {
                     let data = new Uint8Array(e.target.result);
                     let workbook = XLSX.read(data, { 
                         type: 'array',
-                        codepage: 65001,  // UTF-8
                         cellText: true,
                         cellDates: false,
                         raw: true
@@ -590,7 +583,6 @@
             reader.readAsArrayBuffer(file);
         }
 
-        // Reset input để có thể chọn lại cùng file
         event.target.value = '';
     }
 
@@ -605,8 +597,6 @@
             return;
         }
 
-        // Tìm 2 cột chứa Tên và Thành tích
-        // Tự động phát hiện: cột nào chứa text là Tên, cột nào chứa số là Thành tích
         let nameCol = 0;
         let scoreCol = 1;
 
@@ -620,9 +610,8 @@
             }
         }
 
-        // Xóa bảng cũ, tạo bảng mới
         let container = document.getElementById('score-table-container');
-        let html = `<table class="score-table" id="score-table">
+        let tableHTML = `<table class="score-table" id="score-table">
             <thead>
                 <tr>
                     <th style="width:35px">STT</th>
@@ -634,32 +623,37 @@
             <tbody>`;
 
         let count = 0;
+        let rowData = [];
+        
         for(let i = startIdx; i < rows.length; i++) {
             let row = rows[i];
             if(!row || row.length < 2) continue;
             
-            // Lấy giá trị và chuẩn hóa
             let rawName = (row[nameCol] !== undefined && row[nameCol] !== null) ? row[nameCol].toString().trim() : '';
             let rawScore = row[scoreCol];
             
-            // Bỏ dòng trống
             if(!rawName) continue;
-
-            // Chuẩn hóa tên: loại bỏ ký tự lạ, giữ Unicode tiếng Việt
             let name = rawName.replace(/[\x00-\x1F\x7F]/g, '').trim();
             if(!name) continue;
 
-            // Parse số thành tích
             let scoreStr = (rawScore !== undefined && rawScore !== null) ? rawScore.toString().replace(/[^\d.,]/g, '').replace(',', '.') : '';
             let score = parseFloat(scoreStr);
             let val = !isNaN(score) ? score : '';
             
-            html += buildRow(count, escapeHtml(name), val);
+            tableHTML += buildRowHTML(count);
+            rowData.push({name, val});
             count++;
         }
 
-        html += `</tbody></table>`;
-        container.innerHTML = html;
+        tableHTML += `</tbody></table>`;
+        container.innerHTML = tableHTML;
+
+        // Gán value trực tiếp bằng DOM
+        let trs = container.querySelectorAll('tbody tr');
+        trs.forEach((tr, idx) => {
+            tr.querySelector('.input-name').value = rowData[idx].name;
+            tr.querySelector('.input-score').value = rowData[idx].val;
+        });
 
         showToast(`Đã nhập ${count} VĐV từ file. Nhấn "Lưu Thành Tích" để lưu.`);
     }
