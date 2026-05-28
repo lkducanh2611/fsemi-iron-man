@@ -798,47 +798,51 @@
         return str.toLowerCase().trim();
     }
 
+    function normalizeDateString(dateStr) {
+        if (!dateStr) return null;
+        let parts = dateStr.trim().split(/[\/\-\.]/);
+        if (parts.length === 3) {
+            let p1 = parseInt(parts[0]);
+            let p2 = parseInt(parts[1]);
+            let p3 = parseInt(parts[2]);
+            let y, m, d;
+            if (p3 > 1000) { y = p3; m = p2; d = p1; }
+            else if (p1 > 1000) { y = p1; m = p2; d = p3; }
+            else return null;
+            
+            if (isNaN(y) || isNaN(m) || isNaN(d)) return null;
+            return `${y}-${m.toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`;
+        }
+        return null;
+    }
+
     async function syncAllStrava() {
         saveStravaConfig(); // Tự động lưu những gì đang nhập trên UI
         let config = JSON.parse(localStorage.getItem('stravaConfig') || '{}');
         
         let rawDate = config.tournamentStart ? config.tournamentStart.trim() : "";
-        if (!rawDate) {
-            let userDate = prompt("Vui lòng nhập Ngày Bắt Đầu Giải (Định dạng: Năm-Tháng-Ngày, VD: 2026-05-01):");
+        let validDateStr = normalizeDateString(rawDate);
+
+        // Nếu ngày trống hoặc sai định dạng, hỏi lại trực tiếp
+        if (!validDateStr) {
+            let userDate = prompt(`Ngày Bắt Đầu Giải ${rawDate ? '['+rawDate+']' : ''} đang trống hoặc sai định dạng.\nVui lòng nhập ngày (VD: 2026-05-01 hoặc 01/05/2026):`);
             if (userDate) {
-                document.getElementById('strava-tournament-start').value = userDate.trim();
-                saveStravaConfig();
-                return syncAllStrava(); // Gọi lại chính nó để check
+                validDateStr = normalizeDateString(userDate);
+                if (validDateStr) {
+                    // Cập nhật lại UI bằng chuỗi YYYY-MM-DD chuẩn để input type="date" không bị lỗi
+                    document.getElementById('strava-tournament-start').value = validDateStr;
+                    saveStravaConfig();
+                } else {
+                    alert("Ngày bạn gõ vẫn không hợp lệ. Đã hủy đồng bộ.");
+                    return;
+                }
             } else {
                 alert("Bạn phải cung cấp Ngày Bắt Đầu Giải để đồng bộ!");
                 return;
             }
         }
         
-        // Thử parse ngày bằng nhiều cách
-        let tourStart = new Date(rawDate);
-        if (isNaN(tourStart.getTime())) {
-            let parts = rawDate.split(/[\/\-\.]/);
-            if (parts.length === 3) {
-                let p1 = parseInt(parts[0]);
-                let p2 = parseInt(parts[1]);
-                let p3 = parseInt(parts[2]);
-                if (p3 > 1000) tourStart = new Date(p3, p2 - 1, p1); // DD/MM/YYYY
-                else if (p1 > 1000) tourStart = new Date(p1, p2 - 1, p3); // YYYY/MM/DD
-            }
-        }
-
-        if (isNaN(tourStart.getTime())) {
-            let userDate = prompt("Ngày bạn nhập [" + rawDate + "] không hợp lệ. Vui lòng nhập lại (VD: 2026-05-01):");
-            if (userDate) {
-                document.getElementById('strava-tournament-start').value = userDate.trim();
-                saveStravaConfig();
-                return syncAllStrava(); // Gọi lại
-            } else {
-                alert("Hủy đồng bộ.");
-                return;
-            }
-        }
+        let tourStart = new Date(validDateStr);
         tourStart.setHours(0, 0, 0, 0);
 
         let sportClubMap = {
