@@ -286,6 +286,19 @@
     <div id="leaderboard-ind" class="page">
         <h3 style="text-align: center; color: var(--secondary);">BẢNG XẾP HẠNG CÁ NHÂN</h3>
         <p style="text-align: center; font-size: 14px; color: #666;">Công thức: (Chạy x 2.5) + (Đạp x 1) + (Bơi x 20) + (Tổng Bonus) + (Streak)</p>
+        
+        <div class="filter-row" style="justify-content: center; margin-bottom: 15px;">
+            <label style="font-weight:bold;">Sắp xếp theo:</label>
+            <select id="ind-sport-filter" onchange="updateLeaderboard()">
+                <option value="total">Tổng Điểm</option>
+                <option value="run">Thành tích Chạy (km)</option>
+                <option value="bike">Thành tích Đạp (km)</option>
+                <option value="swim">Thành tích Bơi (km)</option>
+                <option value="bonus">Điểm Bonus</option>
+                <option value="streak">Điểm Streak</option>
+            </select>
+        </div>
+
         <table>
             <thead>
                 <tr>
@@ -1457,14 +1470,35 @@
 
         // Tính điểm Cá nhân (loại bỏ VĐV "Tự do")
         let indResults = [];
+        let indSportFilter = document.getElementById('ind-sport-filter') ? document.getElementById('ind-sport-filter').value : 'total';
+
         for (const [iName, stat] of Object.entries(individualStats)) {
             if (stat.team === 'Tự do') continue; // Bỏ qua các VĐV ngoài danh sách khai báo
             let score = (stat.run * 2.5) + (stat.bike * 1) + (stat.swim * 20) + stat.bonus + stat.streak;
-            if (score > 0) {
+            
+            // Lọc bỏ những người không có thành tích ở hạng mục đang chọn
+            let isValid = false;
+            if (indSportFilter === 'run' && stat.run > 0) isValid = true;
+            else if (indSportFilter === 'bike' && stat.bike > 0) isValid = true;
+            else if (indSportFilter === 'swim' && stat.swim > 0) isValid = true;
+            else if (indSportFilter === 'bonus' && stat.bonus > 0) isValid = true;
+            else if (indSportFilter === 'streak' && stat.streak > 0) isValid = true;
+            else if (indSportFilter === 'total' && score > 0) isValid = true;
+
+            if (isValid) {
                 indResults.push({ name: stat.name, team: stat.team, cls: stat.cls, run: stat.run, bike: stat.bike, swim: stat.swim, bonus: stat.bonus, streak: stat.streak, score: score });
             }
         }
-        indResults.sort((a, b) => b.score - a.score);
+        
+        // Sắp xếp theo hạng mục
+        indResults.sort((a, b) => {
+            if (indSportFilter === 'run') return b.run - a.run;
+            if (indSportFilter === 'bike') return b.bike - a.bike;
+            if (indSportFilter === 'swim') return b.swim - a.swim;
+            if (indSportFilter === 'bonus') return b.bonus - a.bonus;
+            if (indSportFilter === 'streak') return b.streak - a.streak;
+            return b.score - a.score;
+        });
 
         // Render Đội
         teamResults.forEach((res, index) => {
