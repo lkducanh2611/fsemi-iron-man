@@ -799,6 +799,7 @@
     }
 
     async function syncAllStrava() {
+        saveStravaConfig(); // Tự động lưu những gì đang nhập trên UI
         let config = JSON.parse(localStorage.getItem('stravaConfig') || '{}');
         if (!config.tournamentStart) {
             alert("Vui lòng cấu hình 'Ngày Bắt Đầu Giải' ở phía trên để hệ thống tự chia tuần!");
