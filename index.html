@@ -365,7 +365,14 @@
 
     <!-- TRANG 2: NHẬP ĐIỂM -->
     <div id="admin" class="page">
-        
+        <!-- Khóa bằng mã PIN -->
+        <div id="admin-login" style="text-align: center; margin-top: 50px;">
+            <h3 style="color: var(--primary);">Nhập Mã PIN để vào trang Quản Trị</h3>
+            <input type="password" id="pin-input" placeholder="Nhập PIN..." style="padding: 10px; font-size: 16px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; width: 250px;">
+            <br>
+            <button onclick="checkAdminPin()" style="padding: 10px 20px; font-size: 16px; background-color: var(--primary); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Xác nhận</button>
+            <p id="pin-error" style="color: red; display: none; margin-top: 10px; font-weight: bold;">Sai mã PIN!</p>
+        </div>
         <div id="admin-content" style="display:none;">
 
             <div style="background: #eaf2f8; padding: 15px; border-left: 5px solid #3498db; margin-bottom: 20px; border-radius: 4px;">
