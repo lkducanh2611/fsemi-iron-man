@@ -365,16 +365,9 @@
 
     <!-- TRANG 2: NHẬP ĐIỂM -->
     <div id="admin" class="page">
-        <script>
-            document.addEventListener('DOMContentLoaded',()=>{
-                const adminLogin = document.getElementById('admin-login');
-                if(adminLogin) adminLogin.style.display='none';
-                const adminContent = document.getElementById('admin-content');
-                if(adminContent) adminContent.style.display='block';
-            });
-        </script>
-        <div id="admin-content">
-            <button onclick="showAdminSettings()" style="margin: 15px 0; padding: 8px 15px; background:#2980b9; color:white; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">⚙️ Cài Đặt</button>
+        
+        <div id="admin-content" style="display:none;">
+
             <div style="background: #eaf2f8; padding: 15px; border-left: 5px solid #3498db; margin-bottom: 20px; border-radius: 4px;">
                 <h4 style="margin: 0 0 10px 0; color: #2980b9;">Cấu hình GitHub Token (Bắt buộc để lưu Public)</h4>
                 <input type="password" id="github-token-input" placeholder="Nhập GitHub Personal Access Token (ghp_...)" style="width: 350px; padding: 8px; border: 1px solid #bdc3c7; border-radius: 4px;">
@@ -408,7 +401,7 @@
             <div class="score-setup">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                     <h3 style="color: var(--secondary); margin: 0;">2. Nhập Thành Tích</h3>
-                    <button onclick="showAdminSettings()" style="background:#2980b9;color:white;border:none;padding:8px 15px;border-radius:4px;cursor:pointer;margin-left:10px;">⚙️ Cài Đặt</button>
+
                 </div>
 
                 <!-- Tabs chọn môn -->
