@@ -418,6 +418,14 @@
                             <option value="all">-- Tất cả --</option>
                         </select>
                     </div>
+                    <div>
+                        <label>Sắp xếp:</label>
+                        <select id="sort-filter" onchange="renderScoreTable()">
+                            <option value="default">Mặc định</option>
+                            <option value="desc">Thành tích (Cao - Thấp)</option>
+                            <option value="asc">Thành tích (Thấp - Cao)</option>
+                        </select>
+                    </div>
                 </div>
 
                 <!-- Upload Excel -->
@@ -804,6 +812,32 @@
 
         let cols = currentSport === 'bonus' ? db.bonusColumns : ['Thành Tích (km)'];
 
+        let rowData = [];
+        displayNames.forEach((name) => {
+            let val = sportData[name] !== undefined ? sportData[name] : (currentSport === 'bonus' ? {} : '');
+            rowData.push({name, val});
+        });
+
+        // Xử lý sắp xếp
+        let sortMode = document.getElementById('sort-filter') ? document.getElementById('sort-filter').value : 'default';
+        if (sortMode !== 'default') {
+            rowData.sort((a, b) => {
+                let scoreA = 0;
+                let scoreB = 0;
+                if (currentSport === 'bonus') {
+                    for (let k in a.val) scoreA += a.val[k] || 0;
+                    for (let k in b.val) scoreB += b.val[k] || 0;
+                } else {
+                    scoreA = parseFloat(a.val) || 0;
+                    scoreB = parseFloat(b.val) || 0;
+                }
+                
+                if (sortMode === 'desc') return scoreB - scoreA;
+                if (sortMode === 'asc') return scoreA - scoreB;
+                return 0;
+            });
+        }
+
         let tableHTML = `<table class="score-table" id="score-table">
             <thead>
                 <tr>
@@ -823,11 +857,8 @@
             </thead>
             <tbody>`;
 
-        let rowData = [];
-        displayNames.forEach((name) => {
-            let val = sportData[name] !== undefined ? sportData[name] : (currentSport === 'bonus' ? {} : '');
+        rowData.forEach((row) => {
             tableHTML += buildRowHTML(cols.length);
-            rowData.push({name, val});
         });
 
         tableHTML += `</tbody></table>`;
