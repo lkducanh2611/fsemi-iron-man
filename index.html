@@ -802,22 +802,42 @@
         saveStravaConfig(); // Tự động lưu những gì đang nhập trên UI
         let config = JSON.parse(localStorage.getItem('stravaConfig') || '{}');
         
-        if (!config.tournamentStart) {
+        let rawDate = config.tournamentStart ? config.tournamentStart.trim() : "";
+        if (!rawDate) {
             let userDate = prompt("Vui lòng nhập Ngày Bắt Đầu Giải (Định dạng: Năm-Tháng-Ngày, VD: 2026-05-01):");
             if (userDate) {
-                document.getElementById('strava-tournament-start').value = userDate;
+                document.getElementById('strava-tournament-start').value = userDate.trim();
                 saveStravaConfig();
-                config = JSON.parse(localStorage.getItem('stravaConfig') || '{}');
+                return syncAllStrava(); // Gọi lại chính nó để check
             } else {
                 alert("Bạn phải cung cấp Ngày Bắt Đầu Giải để đồng bộ!");
                 return;
             }
         }
         
-        let tourStart = new Date(config.tournamentStart);
+        // Thử parse ngày bằng nhiều cách
+        let tourStart = new Date(rawDate);
         if (isNaN(tourStart.getTime())) {
-            alert("Ngày Bắt Đầu Giải không hợp lệ! Vui lòng kiểm tra lại (Nên chọn bằng lịch biểu tượng nhỏ trong ô).");
-            return;
+            let parts = rawDate.split(/[\/\-\.]/);
+            if (parts.length === 3) {
+                let p1 = parseInt(parts[0]);
+                let p2 = parseInt(parts[1]);
+                let p3 = parseInt(parts[2]);
+                if (p3 > 1000) tourStart = new Date(p3, p2 - 1, p1); // DD/MM/YYYY
+                else if (p1 > 1000) tourStart = new Date(p1, p2 - 1, p3); // YYYY/MM/DD
+            }
+        }
+
+        if (isNaN(tourStart.getTime())) {
+            let userDate = prompt("Ngày bạn nhập [" + rawDate + "] không hợp lệ. Vui lòng nhập lại (VD: 2026-05-01):");
+            if (userDate) {
+                document.getElementById('strava-tournament-start').value = userDate.trim();
+                saveStravaConfig();
+                return syncAllStrava(); // Gọi lại
+            } else {
+                alert("Hủy đồng bộ.");
+                return;
+            }
         }
         tourStart.setHours(0, 0, 0, 0);
 
