@@ -752,11 +752,14 @@
         document.getElementById('strava-status').style.color = "green";
     }
 
+    // CORS Proxy - cần thiết vì Strava API không cho trình duyệt gọi trực tiếp
+    const CORS_PROXY = 'https://corsproxy.io/?';
+
     // Lấy Access Token từ Refresh Token
     async function getStravaAccessToken() {
         const config = JSON.parse(localStorage.getItem('stravaConfig') || '{}');
         if (!config.clientId || !config.clientSecret || !config.refreshToken) {
-            throw new Error("Chưa cấu hình Strava Client ID, Secret, hoặc Refresh Token");
+            throw new Error("Chưa cấu hình đầy đủ Strava Client ID, Client Secret, hoặc Refresh Token. Vui lòng kiểm tra lại phần Cấu hình Strava ở trên.");
         }
         let formData = new URLSearchParams();
         formData.append('client_id', config.clientId);
@@ -764,11 +767,20 @@
         formData.append('grant_type', 'refresh_token');
         formData.append('refresh_token', config.refreshToken);
 
-        let res = await fetch('https://www.strava.com/oauth/token', {
-            method: 'POST',
-            body: formData
-        });
-        if (!res.ok) throw new Error("Không thể refresh token (Có thể Refresh Token sai hoặc hết hạn)");
+        let tokenUrl = CORS_PROXY + encodeURIComponent('https://www.strava.com/oauth/token');
+        let res;
+        try {
+            res = await fetch(tokenUrl, {
+                method: 'POST',
+                body: formData
+            });
+        } catch(networkErr) {
+            throw new Error("Không thể kết nối tới Strava (lỗi mạng hoặc CORS). Chi tiết: " + networkErr.message);
+        }
+        if (!res.ok) {
+            let errText = await res.text().catch(() => '');
+            throw new Error(`Strava từ chối xác thực (HTTP ${res.status}). Kiểm tra lại Client ID, Client Secret và Refresh Token. Chi tiết: ${errText}`);
+        }
         let data = await res.json();
         // Lưu lại Refresh Token mới nếu Strava có trả về
         if (data.refresh_token && data.refresh_token !== config.refreshToken) {
@@ -862,12 +874,20 @@
                 let clubId = sportClubMap[sport];
                 if (!clubId) continue; // Bỏ qua nếu môn này chưa nhập ID
 
-                let res = await fetch(`https://www.strava.com/api/v3/clubs/${clubId}/activities?per_page=200`, {
-                    headers: { 'Authorization': `Bearer ${accessToken}` }
-                });
+                let clubUrl = CORS_PROXY + encodeURIComponent(`https://www.strava.com/api/v3/clubs/${clubId}/activities?per_page=200`);
+                let res;
+                try {
+                    res = await fetch(clubUrl, {
+                        headers: { 'Authorization': `Bearer ${accessToken}` }
+                    });
+                } catch(networkErr) {
+                    console.error(`Lỗi mạng khi lấy dữ liệu môn ${sport}:`, networkErr);
+                    continue;
+                }
                 
                 if (!res.ok) {
-                    console.error(`Lỗi lấy dữ liệu môn ${sport}`);
+                    let errBody = await res.text().catch(() => '');
+                    console.error(`Lỗi lấy dữ liệu môn ${sport} (HTTP ${res.status}): ${errBody}`);
                     continue;
                 }
                 let activities = await res.json();
