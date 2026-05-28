@@ -889,63 +889,82 @@
         try {
             let accessToken = await getStravaAccessToken();
             let localNames = getAllMembers();
-            let totalMapped = 0;
             if (!db.processedStravaIds) db.processedStravaIds = {};
+            
+            let report = {
+                fetched: 0,
+                processedAlready: 0,
+                outOfRange: 0,
+                nameMismatch: 0,
+                success: 0,
+                unmatchedNames: new Set()
+            };
 
             for (let sport of ['run', 'bike', 'swim']) {
                 let clubId = sportClubMap[sport];
-                if (!clubId) continue; // Bỏ qua nếu môn này chưa nhập ID
+                if (!clubId) continue;
 
                 let clubUrl = `${VERCEL_API}/strava-activities?clubId=${clubId}`;
                 let res;
                 try {
-                    res = await fetch(clubUrl, {
-                        headers: { 'Authorization': `Bearer ${accessToken}` }
-                    });
+                    res = await fetch(clubUrl, { headers: { 'Authorization': `Bearer ${accessToken}` } });
                 } catch(networkErr) {
-                    console.error(`Lỗi mạng khi lấy dữ liệu môn ${sport}:`, networkErr);
+                    console.error(`Lỗi mạng môn ${sport}:`, networkErr);
                     continue;
                 }
-                
-                if (!res.ok) {
-                    let errBody = await res.text().catch(() => '');
-                    console.error(`Lỗi lấy dữ liệu môn ${sport} (HTTP ${res.status}): ${errBody}`);
-                    continue;
-                }
+                if (!res.ok) continue;
                 let activities = await res.json();
+                
+                report.fetched += activities.length;
 
                 activities.forEach(act => {
-                    // Nếu activity này đã được cộng điểm rồi thì bỏ qua để tránh cộng đúp
-                    if (db.processedStravaIds[act.id]) return;
+                    if (db.processedStravaIds[act.id]) {
+                        report.processedAlready++;
+                        return;
+                    }
 
                     let actDate = new Date(act.start_date_local || act.start_date);
                     let diffTime = actDate.getTime() - tourStart.getTime();
                     let diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
                     
-                    // Nếu hoạt động diễn ra từ ngày bắt đầu giải trở đi
-                    if (diffDays >= 0) {
-                        let weekIndex = Math.floor(diffDays / 7) + 1;
-                        // Chỉ ghi nhận nếu nằm trong số tuần cho phép (1 -> 8)
-                        if (weekIndex >= 1 && weekIndex <= TOTAL_WEEKS) {
-                            let fullName = (act.athlete.firstname + " " + act.athlete.lastname).trim();
-                            let matchedName = localNames.find(n => removeVietnameseTones(n) === removeVietnameseTones(fullName));
-                            
-                            if (matchedName) {
-                                let weekKey = 'week' + weekIndex;
-                                let distKm = act.distance / 1000;
-                                
-                                let currentData = db.sports[sport][weekKey];
-                                if (!currentData) currentData = {};
-                                let existingDist = currentData[matchedName] ? parseFloat(currentData[matchedName]) : 0;
-                                
-                                currentData[matchedName] = parseFloat((existingDist + distKm).toFixed(2));
-                                db.sports[sport][weekKey] = currentData;
-                                
-                                // Đánh dấu là đã xử lý
-                                db.processedStravaIds[act.id] = true;
-                                totalMapped++;
-                            }
-                        }
+                    if (diffDays < 0 || diffDays >= TOTAL_WEEKS * 7) {
+                        report.outOfRange++;
+                        return;
+                    }
+
+                    let weekIndex = Math.floor(diffDays / 7) + 1;
+                    
+                    let sFirstName = (act.athlete.firstname || "").trim();
+                    let sLastName = (act.athlete.lastname || "").trim();
+                    let fullNameStr = (sFirstName + " " + sLastName).trim();
+                    
+                    let normalizedStrava = removeVietnameseTones(fullNameStr).replace(/\s+/g, ' ');
+                    let stravaWords = normalizedStrava.split(' ').sort().join(' ');
+
+                    let matchedName = localNames.find(n => {
+                        let normalizedLocal = removeVietnameseTones(n).replace(/\s+/g, ' ');
+                        if (normalizedLocal === normalizedStrava) return true;
+                        // Khớp nếu tên bị đảo ngược (VD: Nguyen Duc Anh <=> Duc Anh Nguyen)
+                        let localWords = normalizedLocal.split(' ').sort().join(' ');
+                        return localWords === stravaWords;
+                    });
+                    
+                    if (matchedName) {
+                        let weekKey = 'week' + weekIndex;
+                        let distKm = act.distance / 1000;
+                        
+                        let currentData = db.sports[sport][weekKey];
+                        if (!currentData) currentData = {};
+                        let existingDist = currentData[matchedName] ? parseFloat(currentData[matchedName]) : 0;
+                        
+                        currentData[matchedName] = parseFloat((existingDist + distKm).toFixed(2));
+                        db.sports[sport][weekKey] = currentData;
+                        
+                        db.processedStravaIds[act.id] = true;
+                        report.success++;
+                    } else {
+                        report.nameMismatch++;
+                        report.unmatchedNames.add(fullNameStr);
                     }
                 });
             }
@@ -953,7 +972,21 @@
             renderScoreTable();
             saveDB(); // Tự động lưu và push lên git
             hideLoading();
-            alert(`Đồng bộ thành công!\nĐã cập nhật thêm ${totalMapped} hoạt động mới từ Strava vào bảng điểm.`);
+            
+            let msg = `TỔNG KẾT ĐỒNG BỘ:\n`;
+            msg += `- Lấy về: ${report.fetched} hoạt động mới nhất\n`;
+            msg += `- Đã cộng điểm từ trước: ${report.processedAlready}\n`;
+            msg += `- Ngoài thời gian giải: ${report.outOfRange}\n`;
+            msg += `- Sai tên VĐV: ${report.nameMismatch}\n`;
+            msg += `=> THÀNH CÔNG: Đã cộng thêm ${report.success} hoạt động!\n\n`;
+            
+            if (report.nameMismatch > 0) {
+                msg += `Các tên Strava không khớp danh sách:\n`;
+                let unNames = Array.from(report.unmatchedNames).slice(0, 10);
+                msg += unNames.join(", ") + (report.unmatchedNames.size > 10 ? "..." : "");
+            }
+            
+            alert(msg);
 
         } catch (e) {
             hideLoading();
