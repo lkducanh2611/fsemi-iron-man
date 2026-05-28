@@ -234,6 +234,7 @@
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/cpexcel.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 </head>
 <body>
 
@@ -265,6 +266,23 @@
                 </tr>
             </thead>
             <tbody id="leaderboard-body">
+            </tbody>
+        </table>
+
+        <h3 style="text-align: center; color: var(--secondary); margin-top: 40px;">BẢNG XẾP HẠNG CÁ NHÂN</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Hạng</th>
+                    <th>Tên VĐV</th>
+                    <th>Đội</th>
+                    <th>Tổng Điểm</th>
+                    <th>Tổng Chạy (km)</th>
+                    <th>Tổng Đạp (km)</th>
+                    <th>Tổng Bơi (km)</th>
+                </tr>
+            </thead>
+            <tbody id="individual-leaderboard-body">
             </tbody>
         </table>
     </div>
@@ -565,28 +583,29 @@
         let isCSV = fileName.endsWith('.csv');
 
         if(isCSV) {
-            // Đọc CSV: dùng TextDecoder để nhận diện chuẩn xác mã hóa
+            // Đọc CSV: dùng TextDecoder và PapaParse để không bao giờ lỗi font
             let reader = new FileReader();
             reader.onload = function(e) {
                 let buffer = e.target.result;
                 let text = '';
                 try {
-                    // Thử đọc theo UTF-8, fatal=true để bắt lỗi nếu có ký tự lạ
                     let utf8Decoder = new TextDecoder('utf-8', { fatal: true });
                     text = utf8Decoder.decode(buffer);
                 } catch(err) {
-                    // Nếu lỗi UTF-8 -> Dùng Windows-1258 (chuẩn Excel xuất CSV tiếng Việt)
                     let ansiDecoder = new TextDecoder('windows-1258');
                     text = ansiDecoder.decode(buffer);
                 }
                 
-                try {
-                    let workbook = XLSX.read(text, { type: 'string', raw: true });
-                    processWorkbook(workbook);
-                } catch(err) {
-                    showToast('Lỗi phân tích file CSV!');
-                    console.error(err);
-                }
+                Papa.parse(text, {
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        processCSVData(results.data);
+                    },
+                    error: function(err) {
+                        showToast('Lỗi phân tích file CSV!');
+                        console.error(err);
+                    }
+                });
             };
             reader.readAsArrayBuffer(file);
         } else {
@@ -613,7 +632,57 @@
         event.target.value = '';
     }
 
-    // Xử lý dữ liệu workbook đã đọc
+    // Xử lý dữ liệu CSV từ PapaParse
+    function processCSVData(rows) {
+        let container = document.getElementById('score-table-container');
+        let tableHTML = `<table class="score-table" id="score-table">
+            <thead>
+                <tr>
+                    <th style="text-align:left; padding-left:8px;">Tên VĐV</th>
+                    <th style="width:140px">Thành Tích (km)</th>
+                </tr>
+            </thead>
+            <tbody>`;
+
+        let count = 0;
+        let rowData = [];
+        
+        for(let i = 0; i < rows.length; i++) {
+            let row = rows[i];
+            if(!row || row.length < 2) continue;
+            
+            // Bỏ qua dòng tiêu đề nếu có
+            if(i === 0 && row[0] && row[0].toString().toLowerCase().includes('tên')) continue;
+
+            let rawName = (row[0] !== undefined && row[0] !== null) ? row[0].toString().trim() : '';
+            let rawScore = row[1];
+            
+            if(!rawName) continue;
+            let name = rawName.replace(/[\x00-\x1F\x7F]/g, '').trim();
+            if(!name) continue;
+
+            let scoreStr = (rawScore !== undefined && rawScore !== null) ? rawScore.toString().replace(/[^\d.,]/g, '').replace(',', '.') : '';
+            let score = parseFloat(scoreStr);
+            let val = !isNaN(score) ? score : '';
+            
+            tableHTML += buildRowHTML();
+            rowData.push({name, val});
+            count++;
+        }
+
+        tableHTML += `</tbody></table>`;
+        container.innerHTML = tableHTML;
+
+        let trs = container.querySelectorAll('tbody tr');
+        trs.forEach((tr, idx) => {
+            tr.querySelector('.input-name').value = rowData[idx].name;
+            tr.querySelector('.input-score').value = rowData[idx].val;
+        });
+
+        showToast(`Đã nhập ${count} VĐV từ file CSV. Nhấn "Lưu Thành Tích" để lưu.`);
+    }
+
+    // Xử lý dữ liệu Excel (SheetJS)
     function processWorkbook(workbook) {
         let sheetName = workbook.SheetNames[0];
         let sheet = workbook.Sheets[sheetName];
@@ -707,39 +776,77 @@
         showToast('Đã lưu thành tích thành công!');
     }
 
+    function escapeHtml(unsafe) {
+        return (unsafe || '').toString()
+             .replace(/&/g, "&amp;")
+             .replace(/</g, "&lt;")
+             .replace(/>/g, "&gt;")
+             .replace(/"/g, "&quot;")
+             .replace(/'/g, "&#039;");
+    }
+
     // Tính toán và cập nhật Bảng xếp hạng
     function updateLeaderboard() {
-        let tbody = document.getElementById('leaderboard-body');
-        tbody.innerHTML = '';
+        let teamBody = document.getElementById('leaderboard-body');
+        let indBody = document.getElementById('individual-leaderboard-body');
+        if(!teamBody || !indBody) return;
+        
+        teamBody.innerHTML = '';
+        indBody.innerHTML = '';
 
-        let results = [];
+        let teamStats = {};
+        let individualStats = {};
 
+        // Khởi tạo
         for (const [teamName, members] of Object.entries(db.teams)) {
-            let teamRun = 0, teamBike = 0, teamSwim = 0;
-
-            members.forEach(member => {
-                for(let w = 1; w <= TOTAL_WEEKS; w++) {
-                    let wk = 'week' + w;
-                    teamRun += (db.sports.run[wk] && db.sports.run[wk][member]) || 0;
-                    teamBike += (db.sports.bike[wk] && db.sports.bike[wk][member]) || 0;
-                    teamSwim += (db.sports.swim[wk] && db.sports.swim[wk][member]) || 0;
-                }
-            });
-
-            let totalScore = (teamRun * 2.5) + (teamBike * 1) + (teamSwim * 20);
-            
-            results.push({
-                team: teamName,
-                run: teamRun.toFixed(2),
-                bike: teamBike.toFixed(2),
-                swim: teamSwim.toFixed(2),
-                score: totalScore.toFixed(2)
+            teamStats[teamName] = { run: 0, bike: 0, swim: 0 };
+            members.forEach(m => {
+                individualStats[m] = { name: m, team: teamName, run: 0, bike: 0, swim: 0 };
             });
         }
 
-        results.sort((a, b) => b.score - a.score);
+        // Duyệt dữ liệu
+        for (let sport of ['run', 'bike', 'swim']) {
+            for (let w = 1; w <= TOTAL_WEEKS; w++) {
+                let wk = 'week' + w;
+                let data = db.sports[sport][wk] || {};
+                for (const [name, val] of Object.entries(data)) {
+                    if (!individualStats[name]) {
+                        individualStats[name] = { name: name, team: 'Tự do', run: 0, bike: 0, swim: 0 };
+                        if (!teamStats['Tự do']) teamStats['Tự do'] = { run: 0, bike: 0, swim: 0 };
+                    }
+                    individualStats[name][sport] += val;
+                    if(individualStats[name].team !== 'Tự do') {
+                        teamStats[individualStats[name].team][sport] += val;
+                    } else {
+                        teamStats['Tự do'][sport] += val;
+                    }
+                }
+            }
+        }
 
-        results.forEach((res, index) => {
+        // Tính điểm Đội
+        let teamResults = [];
+        for (const [tName, stat] of Object.entries(teamStats)) {
+            let score = (stat.run * 2.5) + (stat.bike * 1) + (stat.swim * 20);
+            if (score > 0 || tName !== 'Tự do') {
+                teamResults.push({ team: tName, run: stat.run, bike: stat.bike, swim: stat.swim, score: score });
+            }
+        }
+        teamResults.sort((a, b) => b.score - a.score);
+
+        // Tính điểm Cá nhân
+        let indResults = [];
+        for (const [iName, stat] of Object.entries(individualStats)) {
+            let score = (stat.run * 2.5) + (stat.bike * 1) + (stat.swim * 20);
+            if (score > 0) {
+                indResults.push({ name: stat.name, team: stat.team, run: stat.run, bike: stat.bike, swim: stat.swim, score: score });
+            }
+        }
+        indResults.sort((a, b) => b.score - a.score);
+
+        // Render Đội
+        teamResults.forEach((res, index) => {
             let rankClass = '';
             let rankText = index + 1;
             if(index === 0) { rankClass = 'rank-1'; rankText = '🥇 1'; }
@@ -748,13 +855,33 @@
 
             let tr = `<tr>
                 <td class="${rankClass}">${rankText}</td>
-                <td style="font-weight: bold; color: var(--secondary);">${res.team}</td>
-                <td style="font-weight: bold; color: var(--primary); font-size: 1.1em;">${res.score}</td>
-                <td>${res.run}</td>
-                <td>${res.bike}</td>
-                <td>${res.swim}</td>
+                <td style="font-weight: bold; color: var(--secondary);">${escapeHtml(res.team)}</td>
+                <td style="font-weight: bold; color: var(--primary); font-size: 1.1em;">${res.score.toFixed(2)}</td>
+                <td>${res.run.toFixed(2)}</td>
+                <td>${res.bike.toFixed(2)}</td>
+                <td>${res.swim.toFixed(2)}</td>
             </tr>`;
-            tbody.innerHTML += tr;
+            teamBody.innerHTML += tr;
+        });
+
+        // Render Cá nhân
+        indResults.forEach((res, index) => {
+            let rankClass = '';
+            let rankText = index + 1;
+            if(index === 0) { rankClass = 'rank-1'; rankText = '🥇 1'; }
+            else if(index === 1) { rankClass = 'rank-2'; rankText = '🥈 2'; }
+            else if(index === 2) { rankClass = 'rank-3'; rankText = '🥉 3'; }
+
+            let tr = `<tr>
+                <td class="${rankClass}">${rankText}</td>
+                <td style="font-weight: bold; color: var(--secondary);">${escapeHtml(res.name)}</td>
+                <td>${escapeHtml(res.team)}</td>
+                <td style="font-weight: bold; color: var(--primary); font-size: 1.1em;">${res.score.toFixed(2)}</td>
+                <td>${res.run.toFixed(2)}</td>
+                <td>${res.bike.toFixed(2)}</td>
+                <td>${res.swim.toFixed(2)}</td>
+            </tr>`;
+            indBody.innerHTML += tr;
         });
     }
 
