@@ -191,7 +191,17 @@
       "week8": {}
     },
     "bike": {
-      "week1": {},
+      "week1": {
+        "Tran Diep": 114.9,
+        "Võ Nguyễn Quang Huy": 26.1,
+        "Sỹ Long": 20.1,
+        "cuong nguyen": 123.6,
+        "Đỗ Hoài": 15.5,
+        "Khiêm Ngô Tri": 14.7,
+        "Dũng Đặng Quang": 32.6,
+        "Mui Phan": 29.3,
+        "Hải Nguyễn": 5
+      },
       "week2": {},
       "week3": {},
       "week4": {},
