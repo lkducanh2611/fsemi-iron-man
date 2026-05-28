@@ -302,7 +302,7 @@
     <div id="streak-bonus" class="page">
         <h3 style="text-align: center; color: var(--secondary);">🔥 BẢNG THEO DÕI CHUỖI TÍCH LŨY (STREAK)</h3>
         <p style="text-align: center; font-size: 14px; color: #666;">
-            Điều kiện 1 tuần chạy: Hạng A(6km), B(5km), C(3km), D(1km)<br>
+            Điều kiện đạt 1 tuần (Tổng Điểm của tuần ≥ Số km yêu cầu x 2.5): Hạng A(≥15đ), B(≥12.5đ), C(≥7.5đ), D(≥2.5đ)<br>
             Điểm chuỗi: 1 Tuần(+10), 2 Tuần(+20),... 8 Tuần(+80). Đứt chuỗi tính lại từ 1 Tuần.
         </p>
         
@@ -1062,17 +1062,29 @@
         
         allMembers.forEach(name => {
             let cls = db.classes[name] || '';
-            let req = reqs[cls] || 0;
+            let reqRun = reqs[cls] || 0;
+            let reqPoints = reqRun * 2.5;
             let weeksData = [];
             let currentStreak = 0;
             let totalStreakPoints = 0;
             
             for (let w = 1; w <= TOTAL_WEEKS; w++) {
                 let wk = 'week' + w;
+                
                 let runKm = db.sports.run[wk] && db.sports.run[wk][name] !== undefined ? db.sports.run[wk][name] : 0;
+                let bikeKm = db.sports.bike[wk] && db.sports.bike[wk][name] !== undefined ? db.sports.bike[wk][name] : 0;
+                let swimKm = db.sports.swim[wk] && db.sports.swim[wk][name] !== undefined ? db.sports.swim[wk][name] : 0;
+                
+                let bonusVal = db.sports.bonus[wk] && db.sports.bonus[wk][name] !== undefined ? db.sports.bonus[wk][name] : {};
+                let bonusPoints = 0;
+                for(let k in bonusVal) {
+                    bonusPoints += bonusVal[k];
+                }
+
+                let totalPoints = (runKm * 2.5) + (bikeKm * 1) + (swimKm * 20) + bonusPoints;
                 
                 let isPassed = false;
-                if (req > 0 && runKm >= req) {
+                if (reqPoints > 0 && totalPoints >= reqPoints) {
                     isPassed = true;
                     currentStreak++;
                     totalStreakPoints += (currentStreak * 10);
