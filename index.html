@@ -220,6 +220,7 @@
         }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/cpexcel.full.min.js"></script>
 </head>
 <body>
 
@@ -535,7 +536,14 @@
         });
     }
 
-    // Xử lý upload file Excel
+    // Escape HTML để tránh lỗi khi tên chứa ký tự đặc biệt
+    function escapeHtml(str) {
+        let div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    // Xử lý upload file Excel (hỗ trợ tiếng Việt có dấu)
     function handleExcelUpload(event) {
         let file = event.target.files[0];
         if(!file) return;
@@ -543,69 +551,117 @@
         // Hiển thị tên file
         document.getElementById('upload-filename').textContent = '📄 ' + file.name;
 
-        let reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-                let data = new Uint8Array(e.target.result);
-                let workbook = XLSX.read(data, { type: 'array' });
-                
-                // Đọc sheet đầu tiên
-                let sheetName = workbook.SheetNames[0];
-                let sheet = workbook.Sheets[sheetName];
-                let rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        let fileName = file.name.toLowerCase();
+        let isCSV = fileName.endsWith('.csv');
 
-                if(rows.length === 0) {
-                    showToast('File Excel trống!');
-                    return;
+        if(isCSV) {
+            // CSV: đọc bằng UTF-8 text
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    let csvText = e.target.result;
+                    let workbook = XLSX.read(csvText, { type: 'string', codepage: 65001 });
+                    processWorkbook(workbook);
+                } catch(err) {
+                    showToast('Lỗi đọc file CSV! Kiểm tra lại định dạng.');
+                    console.error(err);
                 }
-
-                // Bỏ dòng header nếu có (kiểm tra dòng đầu có phải số không)
-                let startIdx = 0;
-                if(rows.length > 1 && isNaN(parseFloat(rows[0][1]))) {
-                    startIdx = 1; // Bỏ qua header
+            };
+            reader.readAsText(file, 'UTF-8');
+        } else {
+            // Excel (.xlsx, .xls): đọc binary
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    let data = new Uint8Array(e.target.result);
+                    let workbook = XLSX.read(data, { 
+                        type: 'array',
+                        codepage: 65001,  // UTF-8
+                        cellText: true,
+                        cellDates: false,
+                        raw: true
+                    });
+                    processWorkbook(workbook);
+                } catch(err) {
+                    showToast('Lỗi đọc file Excel! Kiểm tra lại định dạng.');
+                    console.error(err);
                 }
-
-                // Xóa bảng cũ và tạo bảng mới từ dữ liệu Excel
-                let container = document.getElementById('score-table-container');
-                let html = `<table class="score-table" id="score-table">
-                    <thead>
-                        <tr>
-                            <th style="width:35px">STT</th>
-                            <th style="text-align:left; padding-left:8px;">Tên VĐV</th>
-                            <th style="width:140px">Thành Tích (km)</th>
-                            <th style="width:40px"></th>
-                        </tr>
-                    </thead>
-                    <tbody>`;
-
-                let count = 0;
-                for(let i = startIdx; i < rows.length; i++) {
-                    let row = rows[i];
-                    if(!row || row.length < 2) continue;
-                    
-                    let name = (row[0] || '').toString().trim();
-                    let score = parseFloat(row[1]);
-                    
-                    if(!name) continue;
-                    
-                    let val = !isNaN(score) ? score : '';
-                    html += buildRow(count, name, val);
-                    count++;
-                }
-
-                html += `</tbody></table>`;
-                container.innerHTML = html;
-
-                showToast(`Đã nhập ${count} VĐV từ file Excel. Nhấn "Lưu Thành Tích" để lưu.`);
-            } catch(err) {
-                showToast('Lỗi đọc file Excel! Kiểm tra lại định dạng.');
-                console.error(err);
-            }
-        };
-        reader.readAsArrayBuffer(file);
+            };
+            reader.readAsArrayBuffer(file);
+        }
 
         // Reset input để có thể chọn lại cùng file
         event.target.value = '';
+    }
+
+    // Xử lý dữ liệu workbook đã đọc
+    function processWorkbook(workbook) {
+        let sheetName = workbook.SheetNames[0];
+        let sheet = workbook.Sheets[sheetName];
+        let rows = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: true, defval: '' });
+
+        if(rows.length === 0) {
+            showToast('File trống!');
+            return;
+        }
+
+        // Tìm 2 cột chứa Tên và Thành tích
+        // Tự động phát hiện: cột nào chứa text là Tên, cột nào chứa số là Thành tích
+        let nameCol = 0;
+        let scoreCol = 1;
+
+        // Bỏ dòng header nếu dòng đầu không chứa số ở cột thứ 2
+        let startIdx = 0;
+        if(rows.length > 1) {
+            let firstRow = rows[0];
+            let secondColVal = firstRow[scoreCol];
+            if(secondColVal !== undefined && secondColVal !== '' && isNaN(parseFloat(secondColVal))) {
+                startIdx = 1;
+            }
+        }
+
+        // Xóa bảng cũ, tạo bảng mới
+        let container = document.getElementById('score-table-container');
+        let html = `<table class="score-table" id="score-table">
+            <thead>
+                <tr>
+                    <th style="width:35px">STT</th>
+                    <th style="text-align:left; padding-left:8px;">Tên VĐV</th>
+                    <th style="width:140px">Thành Tích (km)</th>
+                    <th style="width:40px"></th>
+                </tr>
+            </thead>
+            <tbody>`;
+
+        let count = 0;
+        for(let i = startIdx; i < rows.length; i++) {
+            let row = rows[i];
+            if(!row || row.length < 2) continue;
+            
+            // Lấy giá trị và chuẩn hóa
+            let rawName = (row[nameCol] !== undefined && row[nameCol] !== null) ? row[nameCol].toString().trim() : '';
+            let rawScore = row[scoreCol];
+            
+            // Bỏ dòng trống
+            if(!rawName) continue;
+
+            // Chuẩn hóa tên: loại bỏ ký tự lạ, giữ Unicode tiếng Việt
+            let name = rawName.replace(/[\x00-\x1F\x7F]/g, '').trim();
+            if(!name) continue;
+
+            // Parse số thành tích
+            let scoreStr = (rawScore !== undefined && rawScore !== null) ? rawScore.toString().replace(/[^\d.,]/g, '').replace(',', '.') : '';
+            let score = parseFloat(scoreStr);
+            let val = !isNaN(score) ? score : '';
+            
+            html += buildRow(count, escapeHtml(name), val);
+            count++;
+        }
+
+        html += `</tbody></table>`;
+        container.innerHTML = html;
+
+        showToast(`Đã nhập ${count} VĐV từ file. Nhấn "Lưu Thành Tích" để lưu.`);
     }
 
     // Lưu dữ liệu điểm từ bảng ô
