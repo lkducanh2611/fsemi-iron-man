@@ -632,6 +632,76 @@
         event.target.value = '';
     }
 
+    function getAllMembers() {
+        let all = [];
+        for (const members of Object.values(db.teams)) {
+            members.forEach(m => {
+                if(m.trim() && !all.includes(m.trim())) all.push(m.trim());
+            });
+        }
+        return all;
+    }
+
+    function nameSimilarity(broken, target) {
+        let b = broken.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase().replace(/\s+/g, ' ').trim();
+        let t = target.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase().replace(/\s+/g, ' ').trim();
+
+        if (b === t) return 1.0;
+
+        let patternStr = b.replace(/[?]+/g, '.*');
+        patternStr = patternStr.replace(/([()+^${}\[\]|\\])/g, '\\$1');
+        let regex = new RegExp('^' + patternStr + '$');
+
+        if (regex.test(t)) {
+            let knownChars = b.replace(/[?\s]/g, '').length;
+            let tLength = t.replace(/\s/g, '').length || 1;
+            return 0.8 + (knownChars / tLength) * 0.2; 
+        }
+
+        let bWords = b.split(' ');
+        let tWords = t.split(' ');
+        let matchCount = 0;
+        for (let bw of bWords) {
+            if (bw.includes('?') || bw.includes('')) {
+                let bwRegex = new RegExp('^' + bw.replace(/[?]+/g, '.*') + '$');
+                if (tWords.some(tw => bwRegex.test(tw))) matchCount++;
+            } else {
+                if (tWords.includes(bw)) matchCount++;
+            }
+        }
+        let wordScore = matchCount / Math.max(bWords.length, tWords.length);
+        
+        let bSkel = b.replace(/[aeiouy?\s]/g, '');
+        let tSkel = t.replace(/[aeiouy\s]/g, '');
+        if (bSkel === tSkel && bSkel.length > 2) {
+            return Math.max(wordScore, 0.7);
+        }
+
+        return wordScore * 0.6;
+    }
+
+    function findBestMatch(brokenName, existingNames) {
+        let raw = brokenName.trim();
+        if (!raw) return '';
+
+        let bestScore = 0;
+        let bestMatch = raw;
+
+        for (let target of existingNames) {
+            if (!target.trim()) continue;
+            let score = nameSimilarity(raw, target);
+            if (score > bestScore) {
+                bestScore = score;
+                bestMatch = target;
+            }
+        }
+
+        if (bestScore >= 0.6) {
+            return bestMatch;
+        }
+        return raw;
+    }
+
     // Xử lý dữ liệu CSV từ PapaParse
     function processCSVData(rows) {
         let container = document.getElementById('score-table-container');
@@ -646,6 +716,7 @@
 
         let count = 0;
         let rowData = [];
+        let allMembers = getAllMembers();
         
         for(let i = 0; i < rows.length; i++) {
             let row = rows[i];
@@ -660,6 +731,9 @@
             if(!rawName) continue;
             let name = rawName.replace(/[\x00-\x1F\x7F]/g, '').trim();
             if(!name) continue;
+
+            // Tự động sửa lỗi font và khớp tên
+            name = findBestMatch(name, allMembers);
 
             let scoreStr = (rawScore !== undefined && rawScore !== null) ? rawScore.toString().replace(/[^\d.,]/g, '').replace(',', '.') : '';
             let score = parseFloat(scoreStr);
@@ -707,6 +781,10 @@
         }
 
         let container = document.getElementById('score-table-container');
+        let count = 0;
+        let rowData = [];
+        let allMembers = getAllMembers();
+        
         let tableHTML = `<table class="score-table" id="score-table">
             <thead>
                 <tr>
@@ -715,9 +793,6 @@
                 </tr>
             </thead>
             <tbody>`;
-
-        let count = 0;
-        let rowData = [];
         
         for(let i = startIdx; i < rows.length; i++) {
             let row = rows[i];
@@ -901,6 +976,7 @@
         let lines = pastedData.split(/\r?\n/);
         let pasteMap = {};
         let order = [];
+        let allMembers = getAllMembers();
         
         for (let line of lines) {
             if (!line.trim()) continue;
@@ -908,14 +984,21 @@
             let parts = line.includes('\t') ? line.split('\t') : line.split(',');
             
             let name = (parts[0] || '').trim();
-            let scoreStr = parts.length > 1 ? (parts[1] || '') : '';
-            // Lọc ra số
-            let score = parseFloat(scoreStr.replace(/[^\d.,]/g, '').replace(',', '.'));
-            
             if (name) {
+                // Tự động sửa lỗi font và khớp tên
+                name = findBestMatch(name, allMembers);
+
+                let scoreStr = parts.length > 1 ? (parts[1] || '') : '';
+                // Lọc ra số
+                let score = parseFloat(scoreStr.replace(/[^\d.,]/g, '').replace(',', '.'));
+                
                 let key = name.toLowerCase();
-                pasteMap[key] = { name: name, score: !isNaN(score) ? score : '' };
-                order.push(key);
+                if (!pasteMap[key]) {
+                    pasteMap[key] = { name: name, score: !isNaN(score) ? score : '' };
+                    order.push(key);
+                } else if (!isNaN(score)) {
+                    pasteMap[key].score = score;
+                }
             }
         }
         
