@@ -264,6 +264,9 @@
     <div id="leaderboard-team" class="page active">
         <h3 style="text-align: center; color: var(--secondary);">BẢNG XẾP HẠNG ĐỒNG ĐỘI</h3>
         <p style="text-align: center; font-size: 14px; color: #666;">Công thức: (Chạy x 2.5) + (Đạp x 1) + (Bơi x 20) + (Tổng Bonus) + (Streak)</p>
+        <div style="text-align: right; margin-bottom: 10px;">
+            <button onclick="exportTeamLeaderboard()" style="background: #27ae60; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">📥 Xuất Excel</button>
+        </div>
         <table>
             <thead>
                 <tr>
@@ -287,16 +290,19 @@
         <h3 style="text-align: center; color: var(--secondary);">BẢNG XẾP HẠNG CÁ NHÂN</h3>
         <p style="text-align: center; font-size: 14px; color: #666;">Công thức: (Chạy x 2.5) + (Đạp x 1) + (Bơi x 20) + (Tổng Bonus) + (Streak)</p>
         
-        <div class="filter-row" style="justify-content: center; margin-bottom: 15px;">
-            <label style="font-weight:bold;">Sắp xếp theo:</label>
-            <select id="ind-sport-filter" onchange="updateLeaderboard()">
-                <option value="total">Tổng Điểm</option>
-                <option value="run">Thành tích Chạy (km)</option>
-                <option value="bike">Thành tích Đạp (km)</option>
-                <option value="swim">Thành tích Bơi (km)</option>
-                <option value="bonus">Điểm Bonus</option>
-                <option value="streak">Điểm Streak</option>
-            </select>
+        <div class="filter-row" style="justify-content: space-between; margin-bottom: 15px;">
+            <div>
+                <label style="font-weight:bold;">Sắp xếp theo:</label>
+                <select id="ind-sport-filter" onchange="updateLeaderboard()">
+                    <option value="total">Tổng Điểm</option>
+                    <option value="run">Thành tích Chạy (km)</option>
+                    <option value="bike">Thành tích Đạp (km)</option>
+                    <option value="swim">Thành tích Bơi (km)</option>
+                    <option value="bonus">Điểm Bonus</option>
+                    <option value="streak">Điểm Streak</option>
+                </select>
+            </div>
+            <button onclick="exportIndividualLeaderboard()" style="background: #27ae60; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;">📥 Xuất Excel</button>
         </div>
 
         <table>
@@ -462,7 +468,8 @@
                 </div>
                 
                 <div style="display: flex; gap: 10px; margin-top: 15px;">
-                    <button class="btn-save" onclick="saveSportData()" style="flex: 7;">Lưu Thành Tích</button>
+                    <button class="btn-save" onclick="saveSportData()" style="flex: 5;">Lưu Thành Tích</button>
+                    <button onclick="exportAdminData()" style="flex: 2; background: #27ae60; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; padding: 10px;">📥 Xuất Data</button>
                     <button onclick="resetSportData()" style="flex: 3; background: #e74c3c; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; padding: 10px;">Làm Lại (Reset)</button>
                 </div>
             </div>
@@ -1656,6 +1663,104 @@
             showToast(`Smart Paste: Đã thêm/cập nhật ${filled + newCount} VĐV. Nhấn "Lưu Thành Tích" để lưu.`);
         }
     }
+
+    // ==========================================
+    // CÁC HÀM XUẤT EXCEL
+    // ==========================================
+    function exportToExcel(dataArray, filename) {
+        if (!window.XLSX) {
+            alert("Thư viện xuất Excel chưa được tải. Vui lòng kiểm tra lại kết nối mạng!");
+            return;
+        }
+        let ws = XLSX.utils.json_to_sheet(dataArray);
+        let wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Data");
+        XLSX.writeFile(wb, filename + ".xlsx");
+    }
+
+    function exportTeamLeaderboard() {
+        let teamBody = document.getElementById('leaderboard-body');
+        let rows = teamBody.querySelectorAll('tr');
+        let data = [];
+        rows.forEach(tr => {
+            let cols = tr.querySelectorAll('td');
+            if (cols.length >= 8) {
+                data.push({
+                    "Hạng": cols[0].innerText,
+                    "Tên Nhóm": cols[1].innerText,
+                    "Tổng Điểm": parseFloat(cols[2].innerText) || 0,
+                    "Tổng Chạy (km)": parseFloat(cols[3].innerText) || 0,
+                    "Tổng Đạp (km)": parseFloat(cols[4].innerText) || 0,
+                    "Tổng Bơi (km)": parseFloat(cols[5].innerText) || 0,
+                    "Bonus": parseFloat(cols[6].innerText.replace('+','')) || 0,
+                    "Streak": parseInt(cols[7].innerText.replace('+','')) || 0
+                });
+            }
+        });
+        exportToExcel(data, "FSEMI_BXH_Dong_Doi");
+    }
+
+    function exportIndividualLeaderboard() {
+        let indBody = document.getElementById('individual-leaderboard-body');
+        let rows = indBody.querySelectorAll('tr');
+        let data = [];
+        rows.forEach(tr => {
+            let cols = tr.querySelectorAll('td');
+            if (cols.length >= 10) {
+                data.push({
+                    "Hạng": cols[0].innerText,
+                    "Tên VĐV": cols[1].innerText,
+                    "Hạng VĐV": cols[2].innerText,
+                    "Đội": cols[3].innerText,
+                    "Tổng Điểm": parseFloat(cols[4].innerText) || 0,
+                    "Tổng Chạy (km)": parseFloat(cols[5].innerText) || 0,
+                    "Tổng Đạp (km)": parseFloat(cols[6].innerText) || 0,
+                    "Tổng Bơi (km)": parseFloat(cols[7].innerText) || 0,
+                    "Bonus": parseFloat(cols[8].innerText.replace('+','')) || 0,
+                    "Streak": parseInt(cols[9].innerText.replace('+','')) || 0
+                });
+            }
+        });
+        exportToExcel(data, "FSEMI_BXH_Ca_Nhan");
+    }
+
+    function exportAdminData() {
+        let week = document.getElementById('week-select').value;
+        let team = document.getElementById('team-filter').value;
+        let sportData = db.sports[currentSport][week] || {};
+        
+        let displayNames = [];
+        if (team === 'all') {
+            displayNames = getAllMembers();
+            let existingNames = Object.keys(sportData);
+            existingNames.forEach(name => {
+                if (!displayNames.includes(name)) displayNames.push(name);
+            });
+        } else {
+            displayNames = db.teams[team] || [];
+        }
+
+        let cols = currentSport === 'bonus' ? db.bonusColumns : ['Thành Tích (km)'];
+        let data = [];
+
+        displayNames.forEach(name => {
+            let rowObj = { "Tên VĐV": name, "Đội": db.classes[name] ? (Object.keys(db.teams).find(t => db.teams[t].includes(name)) || "Tự do") : "Tự do" };
+            let val = sportData[name];
+
+            if (currentSport === 'bonus') {
+                cols.forEach(colName => {
+                    rowObj[colName] = (val && val[colName]) ? val[colName] : 0;
+                });
+            } else {
+                rowObj[cols[0]] = val !== undefined ? val : 0;
+            }
+            data.push(rowObj);
+        });
+
+        let sportName = currentSport === 'bonus' ? 'Bonus' : (currentSport === 'run' ? 'ChayBo' : (currentSport === 'bike' ? 'DapXe' : 'BoiLoi'));
+        exportToExcel(data, `FSEMI_ChiTiet_${sportName}_${week}_${team}`);
+    }
+
 </script>
 
 </body>
