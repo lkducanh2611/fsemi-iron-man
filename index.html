@@ -762,11 +762,34 @@
     // CORS Proxy - cần thiết vì Strava API không cho trình duyệt gọi trực tiếp
     const CORS_PROXY = 'https://corsproxy.io/?';
 
+    // Đọc cấu hình Strava từ DOM + localStorage (ưu tiên DOM nếu có)
+    function getStravaConfig() {
+        let stored = JSON.parse(localStorage.getItem('stravaConfig') || '{}');
+        let getVal = function(id, fallback) {
+            let el = document.getElementById(id);
+            let domVal = el ? el.value.trim() : '';
+            return domVal || (fallback || '').trim();
+        };
+        return {
+            clientId: getVal('strava-client-id', stored.clientId),
+            clientSecret: getVal('strava-client-secret', stored.clientSecret),
+            refreshToken: getVal('strava-refresh-token', stored.refreshToken),
+            tournamentStart: getVal('strava-tournament-start', stored.tournamentStart),
+            clubRun: getVal('strava-club-run', stored.clubRun),
+            clubBike: getVal('strava-club-bike', stored.clubBike),
+            clubSwim: getVal('strava-club-swim', stored.clubSwim)
+        };
+    }
+
     // Lấy Access Token từ Refresh Token
     async function getStravaAccessToken() {
-        const config = JSON.parse(localStorage.getItem('stravaConfig') || '{}');
+        const config = getStravaConfig();
         if (!config.clientId || !config.clientSecret || !config.refreshToken) {
-            throw new Error("Chưa cấu hình đầy đủ Strava Client ID, Client Secret, hoặc Refresh Token. Vui lòng kiểm tra lại phần Cấu hình Strava ở trên.");
+            let missing = [];
+            if (!config.clientId) missing.push('Client ID');
+            if (!config.clientSecret) missing.push('Client Secret');
+            if (!config.refreshToken) missing.push('Refresh Token');
+            throw new Error("Thiếu: " + missing.join(', ') + ". Vui lòng nhập đầy đủ ở phần Cấu hình Strava, bấm Lưu Cấu Hình, rồi thử lại.");
         }
         let formData = new URLSearchParams();
         formData.append('client_id', config.clientId);
@@ -793,7 +816,8 @@
         if (data.refresh_token && data.refresh_token !== config.refreshToken) {
             config.refreshToken = data.refresh_token;
             localStorage.setItem('stravaConfig', JSON.stringify(config));
-            document.getElementById('strava-refresh-token').value = config.refreshToken;
+            let rtEl = document.getElementById('strava-refresh-token');
+            if (rtEl) rtEl.value = config.refreshToken;
         }
         return data.access_token;
     }
@@ -837,11 +861,9 @@
 
     async function syncAllStrava() {
         saveStravaConfig();
-        let config = JSON.parse(localStorage.getItem('stravaConfig') || '{}');
+        let config = getStravaConfig();
         
-        // Đọc ngày trực tiếp từ ô nhập trên giao diện (không phụ thuộc localStorage)
-        let dateEl = document.getElementById('strava-tournament-start');
-        let rawDate = (dateEl ? dateEl.value.trim() : '') || (config.tournamentStart || '').trim();
+        let rawDate = config.tournamentStart || '';
         
         if (!rawDate) {
             alert('Bạn chưa nhập Ngày Bắt Đầu Giải! Vui lòng nhập vào ô ở phần Cấu hình Strava (VD: 2026-06-01) rồi bấm lại nút đồng bộ.');
