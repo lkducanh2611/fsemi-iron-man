@@ -247,6 +247,7 @@
 <nav>
     <button class="nav-btn active" onclick="switchPage('leaderboard-team', this)">BXH Đồng Đội</button>
     <button class="nav-btn" onclick="switchPage('leaderboard-ind', this)">BXH Cá Nhân</button>
+    <button class="nav-btn" onclick="switchPage('streak-bonus', this)">🔥 Chuỗi (Streak)</button>
     <button class="nav-btn" onclick="switchPage('admin', this)">Nhập Điểm (Admin)</button>
 </nav>
 
@@ -254,7 +255,7 @@
     <!-- TRANG 1: BXH ĐỒNG ĐỘI -->
     <div id="leaderboard-team" class="page active">
         <h3 style="text-align: center; color: var(--secondary);">BẢNG XẾP HẠNG ĐỒNG ĐỘI</h3>
-        <p style="text-align: center; font-size: 14px; color: #666;">Công thức: (Chạy x 2.5) + (Đạp x 1) + (Bơi x 20) + (Bonus x 1)</p>
+        <p style="text-align: center; font-size: 14px; color: #666;">Công thức: (Chạy x 2.5) + (Đạp x 1) + (Bơi x 20) + (Tổng Bonus) + (Streak)</p>
         <table>
             <thead>
                 <tr>
@@ -265,6 +266,7 @@
                     <th>Tổng Đạp (km)</th>
                     <th>Tổng Bơi (km)</th>
                     <th>Bonus</th>
+                    <th>Streak</th>
                 </tr>
             </thead>
             <tbody id="leaderboard-body">
@@ -275,7 +277,7 @@
     <!-- TRANG 2: BXH CÁ NHÂN -->
     <div id="leaderboard-ind" class="page">
         <h3 style="text-align: center; color: var(--secondary);">BẢNG XẾP HẠNG CÁ NHÂN</h3>
-        <p style="text-align: center; font-size: 14px; color: #666;">Công thức: (Chạy x 2.5) + (Đạp x 1) + (Bơi x 20) + (Bonus x 1)</p>
+        <p style="text-align: center; font-size: 14px; color: #666;">Công thức: (Chạy x 2.5) + (Đạp x 1) + (Bơi x 20) + (Tổng Bonus) + (Streak)</p>
         <table>
             <thead>
                 <tr>
@@ -288,11 +290,50 @@
                     <th>Tổng Đạp (km)</th>
                     <th>Tổng Bơi (km)</th>
                     <th>Bonus</th>
+                    <th>Streak</th>
                 </tr>
             </thead>
             <tbody id="individual-leaderboard-body">
             </tbody>
         </table>
+    </div>
+
+    <!-- TRANG 3: STREAK BONUS -->
+    <div id="streak-bonus" class="page">
+        <h3 style="text-align: center; color: var(--secondary);">🔥 BẢNG THEO DÕI CHUỖI TÍCH LŨY (STREAK)</h3>
+        <p style="text-align: center; font-size: 14px; color: #666;">
+            Điều kiện 1 tuần chạy: Hạng A(6km), B(5km), C(3km), D(1km)<br>
+            Điểm chuỗi: 1 Tuần(+10), 2 Tuần(+20),... 8 Tuần(+80). Đứt chuỗi tính lại từ 1 Tuần.
+        </p>
+        
+        <div class="filter-row" style="justify-content: center; margin-bottom: 15px;">
+            <label style="font-weight:bold;">Lọc theo Đội:</label>
+            <select id="streak-team-filter" onchange="renderStreakBoard()">
+                <option value="all">-- Tất cả --</option>
+            </select>
+        </div>
+
+        <div class="table-scroll-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="min-width: 150px;">Tên VĐV</th>
+                        <th style="min-width: 60px;">Hạng</th>
+                        <th style="width: 50px;">T1</th>
+                        <th style="width: 50px;">T2</th>
+                        <th style="width: 50px;">T3</th>
+                        <th style="width: 50px;">T4</th>
+                        <th style="width: 50px;">T5</th>
+                        <th style="width: 50px;">T6</th>
+                        <th style="width: 50px;">T7</th>
+                        <th style="width: 50px;">T8</th>
+                        <th style="min-width: 100px;">Tổng Điểm</th>
+                    </tr>
+                </thead>
+                <tbody id="streak-board-body">
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <!-- TRANG 2: NHẬP ĐIỂM -->
@@ -364,6 +405,7 @@
 
                 <div style="display: flex; gap: 10px; margin-top: 10px;">
                     <button class="btn-add-row" onclick="addRow()">+ Thêm Dòng</button>
+                    <button class="btn-add-col" id="btn-add-bonus-col" onclick="addBonusColumn()" style="display: none; background: #e67e22; border: none; border-radius: 4px; color: white; cursor: pointer; padding: 0 10px; font-weight: bold;">+ Thêm Cột Bonus</button>
                 </div>
                 
                 <button class="btn-save" onclick="saveSportData()" style="width: 100%; margin-top: 15px;">Lưu Thành Tích</button>
@@ -379,6 +421,7 @@
     let db = {
         teams: {},
         classes: {},
+        bonusColumns: ['Điểm Cộng'],
         sports: {
             run: {},
             bike: {},
@@ -398,6 +441,17 @@
                 if(!db.sports[sport][wk]) db.sports[sport][wk] = {};
             }
         });
+        
+        // Migrate existing bonus data from number to object
+        for(let w = 1; w <= TOTAL_WEEKS; w++) {
+            let wk = 'week' + w;
+            let data = db.sports.bonus[wk];
+            for(let name in data) {
+                if (typeof data[name] === 'number') {
+                    data[name] = { 'Điểm Cộng': data[name] };
+                }
+            }
+        }
     }
 
     // Khởi tạo
@@ -407,6 +461,7 @@
             db = {
                 teams: saved.teams || {},
                 classes: saved.classes || {},
+                bonusColumns: saved.bonusColumns || ['Điểm Cộng'],
                 sports: {
                     run: (saved.sports && saved.sports.run) || {},
                     bike: (saved.sports && saved.sports.bike) || {},
@@ -448,6 +503,7 @@
         document.getElementById(pageId).classList.add('active');
         btn.classList.add('active');
         if(pageId.startsWith('leaderboard')) updateLeaderboard();
+        if(pageId === 'streak-bonus') renderStreakBoard();
         if(pageId === 'admin') renderScoreTable();
     }
 
@@ -456,6 +512,10 @@
         currentSport = sport;
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
+        
+        let addColBtn = document.getElementById('btn-add-bonus-col');
+        if(addColBtn) addColBtn.style.display = sport === 'bonus' ? 'block' : 'none';
+        
         renderScoreTable();
     }
 
@@ -558,20 +618,31 @@
             }
         }
 
-        let headerText = currentSport === 'bonus' ? 'Điểm Cộng' : 'Thành Tích (km)';
+        let cols = currentSport === 'bonus' ? db.bonusColumns : ['Thành Tích (km)'];
+
         let tableHTML = `<table class="score-table" id="score-table">
             <thead>
                 <tr>
-                    <th style="text-align:left; padding-left:8px;">Tên VĐV</th>
-                    <th style="width:140px">${headerText}</th>
-                </tr>
+                    <th style="text-align:left; padding-left:8px;">Tên VĐV</th>`;
+        
+        cols.forEach((colName, idx) => {
+            if (currentSport === 'bonus') {
+                tableHTML += `<th style="width:120px; text-align:center;">
+                    <div contenteditable="true" onblur="updateBonusColumnName(${idx}, this.innerText)" style="border-bottom: 1px dashed #ccc; display:inline-block; min-width: 60px; padding: 2px;" title="Nhấn để sửa tên">${escapeHtml(colName)}</div>
+                </th>`;
+            } else {
+                tableHTML += `<th style="width:140px; text-align:center;">${escapeHtml(colName)}</th>`;
+            }
+        });
+        
+        tableHTML += `</tr>
             </thead>
             <tbody>`;
 
         let rowData = [];
         displayNames.forEach((name) => {
-            let val = sportData[name] !== undefined ? sportData[name] : '';
-            tableHTML += buildRowHTML();
+            let val = sportData[name] !== undefined ? sportData[name] : (currentSport === 'bonus' ? {} : '');
+            tableHTML += buildRowHTML(cols.length);
             rowData.push({name, val});
         });
 
@@ -582,34 +653,66 @@
         let trs = container.querySelectorAll('tbody tr');
         trs.forEach((tr, idx) => {
             tr.querySelector('.input-name').value = rowData[idx].name;
-            tr.querySelector('.input-score').value = rowData[idx].val;
+            let scoreInputs = tr.querySelectorAll('.input-score');
+            if (currentSport === 'bonus') {
+                cols.forEach((colName, cIdx) => {
+                    let v = rowData[idx].val && rowData[idx].val[colName] !== undefined ? rowData[idx].val[colName] : '';
+                    if (scoreInputs[cIdx]) scoreInputs[cIdx].value = v;
+                });
+            } else {
+                if (scoreInputs[0]) scoreInputs[0].value = rowData[idx].val;
+            }
         });
     }
 
-    // Tạo HTML cho 1 dòng bảng (chỉ có 2 cột giống Excel)
-    function buildRowHTML() {
-        return `<tr>
+    function addBonusColumn() {
+        let newColName = 'Bonus ' + (db.bonusColumns.length + 1);
+        db.bonusColumns.push(newColName);
+        saveDB();
+        renderScoreTable();
+    }
+
+    function updateBonusColumnName(idx, newName) {
+        newName = newName.trim();
+        if (newName && newName !== db.bonusColumns[idx]) {
+            let oldName = db.bonusColumns[idx];
+            for(let w = 1; w <= TOTAL_WEEKS; w++) {
+                let wk = 'week' + w;
+                let data = db.sports.bonus[wk];
+                for(let name in data) {
+                    if (data[name][oldName] !== undefined) {
+                        data[name][newName] = data[name][oldName];
+                        delete data[name][oldName];
+                    }
+                }
+            }
+            db.bonusColumns[idx] = newName;
+            saveDB();
+        }
+        renderScoreTable();
+    }
+
+    // Tạo HTML cho 1 dòng bảng
+    function buildRowHTML(colCount = 1) {
+        let html = `<tr>
             <td>
                 <input type="text" class="input-name" placeholder="Nhập tên VĐV...">
-            </td>
-            <td>
-                <input type="number" class="input-score" placeholder="0.0" step="0.01" min="0">
-            </td>
-        </tr>`;
+            </td>`;
+        for(let i=0; i<colCount; i++) {
+            html += `<td><input type="number" class="input-score" placeholder="0.0" step="0.01" min="0"></td>`;
+        }
+        html += `</tr>`;
+        return html;
     }
 
     // Thêm dòng mới vào bảng
     function addRow() {
         let tbody = document.querySelector('#score-table tbody');
         if(!tbody) return;
-        let tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>
-                <input type="text" class="input-name" placeholder="Nhập tên VĐV...">
-            </td>
-            <td>
-                <input type="number" class="input-score" placeholder="0.0" step="0.01" min="0">
-            </td>`;
+        let colCount = currentSport === 'bonus' ? db.bonusColumns.length : 1;
+        let temp = document.createElement('table');
+        temp.innerHTML = `<tbody>${buildRowHTML(colCount)}</tbody>`;
+        let tr = temp.querySelector('tr');
         tbody.appendChild(tr);
         tr.querySelector('.input-name').focus();
     }
@@ -822,13 +925,12 @@
         }
 
         let nameCol = 0;
-        let scoreCol = 1;
 
         // Bỏ dòng header nếu dòng đầu không chứa số ở cột thứ 2
         let startIdx = 0;
         if(rows.length > 1) {
             let firstRow = rows[0];
-            let secondColVal = firstRow[scoreCol];
+            let secondColVal = firstRow[1];
             if(secondColVal !== undefined && secondColVal !== '' && isNaN(parseFloat(secondColVal))) {
                 startIdx = 1;
             }
@@ -839,13 +941,24 @@
         let rowData = [];
         let allMembers = getAllMembers();
         
-        let headerText = currentSport === 'bonus' ? 'Điểm Cộng' : 'Thành Tích (km)';
+        let cols = currentSport === 'bonus' ? db.bonusColumns : ['Thành Tích (km)'];
+
         let tableHTML = `<table class="score-table" id="score-table">
             <thead>
                 <tr>
-                    <th style="text-align:left; padding-left:8px;">Tên VĐV</th>
-                    <th style="width:140px">${headerText}</th>
-                </tr>
+                    <th style="text-align:left; padding-left:8px;">Tên VĐV</th>`;
+        
+        cols.forEach((colName, idx) => {
+            if (currentSport === 'bonus') {
+                tableHTML += `<th style="width:120px; text-align:center;">
+                    <div contenteditable="true" onblur="updateBonusColumnName(${idx}, this.innerText)" style="border-bottom: 1px dashed #ccc; display:inline-block; min-width: 60px; padding: 2px;" title="Nhấn để sửa tên">${escapeHtml(colName)}</div>
+                </th>`;
+            } else {
+                tableHTML += `<th style="width:140px; text-align:center;">${escapeHtml(colName)}</th>`;
+            }
+        });
+        
+        tableHTML += `</tr>
             </thead>
             <tbody>`;
         
@@ -854,18 +967,20 @@
             if(!row || row.length < 2) continue;
             
             let rawName = (row[nameCol] !== undefined && row[nameCol] !== null) ? row[nameCol].toString().trim() : '';
-            let rawScore = row[scoreCol];
-            
             if(!rawName) continue;
             let name = rawName.replace(/[\x00-\x1F\x7F]/g, '').trim();
             if(!name) continue;
 
-            let scoreStr = (rawScore !== undefined && rawScore !== null) ? rawScore.toString().replace(/[^\d.,]/g, '').replace(',', '.') : '';
-            let score = parseFloat(scoreStr);
-            let val = !isNaN(score) ? score : '';
+            let scores = [];
+            for(let j=0; j<cols.length; j++) {
+                let rawScore = row[j+1];
+                let scoreStr = (rawScore !== undefined && rawScore !== null) ? rawScore.toString().replace(/[^\d.,]/g, '').replace(',', '.') : '';
+                let score = parseFloat(scoreStr);
+                scores.push(!isNaN(score) ? score : '');
+            }
             
-            tableHTML += buildRowHTML();
-            rowData.push({name, val});
+            tableHTML += buildRowHTML(cols.length);
+            rowData.push({name, scores});
             count++;
         }
 
@@ -876,7 +991,12 @@
         let trs = container.querySelectorAll('tbody tr');
         trs.forEach((tr, idx) => {
             tr.querySelector('.input-name').value = rowData[idx].name;
-            tr.querySelector('.input-score').value = rowData[idx].val;
+            let sInputs = tr.querySelectorAll('.input-score');
+            rowData[idx].scores.forEach((s, sIdx) => {
+                if (sInputs[sIdx] && s !== '') {
+                    sInputs[sIdx].value = s;
+                }
+            });
         });
 
         showToast(`Đã nhập ${count} VĐV từ file. Nhấn "Lưu Thành Tích" để lưu.`);
@@ -889,15 +1009,35 @@
         // Xóa dữ liệu cũ của tuần này và ghi lại từ bảng
         db.sports[currentSport][week] = {};
 
-        let rows = document.querySelectorAll('#score-table tbody tr');
+        let cols = currentSport === 'bonus' ? db.bonusColumns : ['score'];
+
         rows.forEach(row => {
             let nameInput = row.querySelector('.input-name');
-            let scoreInput = row.querySelector('.input-score');
-            if(nameInput && scoreInput) {
+            let scoreInputs = row.querySelectorAll('.input-score');
+            if(nameInput && scoreInputs.length > 0) {
                 let name = nameInput.value.trim();
-                let val = parseFloat(scoreInput.value);
-                if(name && !isNaN(val) && val > 0) {
-                    db.sports[currentSport][week][name] = val;
+                if(name) {
+                    if (currentSport === 'bonus') {
+                        let obj = {};
+                        let hasVal = false;
+                        cols.forEach((colName, idx) => {
+                            if (scoreInputs[idx]) {
+                                let val = parseFloat(scoreInputs[idx].value);
+                                if (!isNaN(val) && val > 0) {
+                                    obj[colName] = val;
+                                    hasVal = true;
+                                }
+                            }
+                        });
+                        if (hasVal) {
+                            db.sports[currentSport][week][name] = obj;
+                        }
+                    } else {
+                        let val = parseFloat(scoreInputs[0].value);
+                        if (!isNaN(val) && val > 0) {
+                            db.sports[currentSport][week][name] = val;
+                        }
+                    }
                 }
             }
         });
@@ -915,6 +1055,90 @@
              .replace(/'/g, "&#039;");
     }
 
+    function calculateStreak() {
+        let streakStats = {};
+        let reqs = { 'A': 6, 'B': 5, 'C': 3, 'D': 1 };
+        let allMembers = getAllMembers();
+        
+        allMembers.forEach(name => {
+            let cls = db.classes[name] || '';
+            let req = reqs[cls] || 0;
+            let weeksData = [];
+            let currentStreak = 0;
+            let totalStreakPoints = 0;
+            
+            for (let w = 1; w <= TOTAL_WEEKS; w++) {
+                let wk = 'week' + w;
+                let runKm = db.sports.run[wk] && db.sports.run[wk][name] !== undefined ? db.sports.run[wk][name] : 0;
+                
+                let isPassed = false;
+                if (req > 0 && runKm >= req) {
+                    isPassed = true;
+                    currentStreak++;
+                    totalStreakPoints += (currentStreak * 10);
+                } else {
+                    currentStreak = 0;
+                }
+                weeksData.push(isPassed);
+            }
+            
+            streakStats[name] = {
+                name: name,
+                team: Object.keys(db.teams).find(t => db.teams[t].includes(name)) || 'Tự do',
+                cls: cls,
+                weeks: weeksData,
+                score: totalStreakPoints
+            };
+        });
+        
+        return streakStats;
+    }
+
+    function renderStreakBoard() {
+        let tbody = document.getElementById('streak-board-body');
+        if (!tbody) return;
+        
+        let filter = document.getElementById('streak-team-filter').value;
+        let streakStats = calculateStreak();
+        
+        let list = Object.values(streakStats).filter(s => s.team !== 'Tự do');
+        if (filter !== 'all') {
+            list = list.filter(s => s.team === filter);
+        }
+        
+        list.sort((a, b) => b.score - a.score);
+        
+        let html = '';
+        list.forEach(s => {
+            let clsBadge = s.cls ? `<span style="background:#3498db; color:white; padding: 2px 6px; border-radius: 4px; font-size:12px; font-weight:bold;">${escapeHtml(s.cls)}</span>` : '';
+            let wHtml = '';
+            s.weeks.forEach(passed => {
+                wHtml += `<td style="text-align:center;">${passed ? '🔥' : ''}</td>`;
+            });
+            html += `<tr>
+                <td style="font-weight: bold; color: var(--secondary);">${escapeHtml(s.name)}</td>
+                <td style="text-align: center;">${clsBadge}</td>
+                ${wHtml}
+                <td style="color: #e74c3c; font-weight: bold; font-size: 1.1em; text-align: center;">+${s.score}</td>
+            </tr>`;
+        });
+        tbody.innerHTML = html;
+        
+        // Update streak-team-filter dropdown
+        let select = document.getElementById('streak-team-filter');
+        let oldVal = select.value;
+        select.innerHTML = '<option value="all">-- Tất cả --</option>';
+        for (const teamName of Object.keys(db.teams)) {
+            let opt = document.createElement('option');
+            opt.value = teamName;
+            opt.textContent = teamName;
+            select.appendChild(opt);
+        }
+        if (oldVal && Object.keys(db.teams).includes(oldVal)) {
+            select.value = oldVal;
+        }
+    }
+
     // Tính toán và cập nhật Bảng xếp hạng
     function updateLeaderboard() {
         let teamBody = document.getElementById('leaderboard-body');
@@ -928,10 +1152,13 @@
         let individualStats = {};
 
         // Khởi tạo
+        let streakStats = calculateStreak();
         for (const [teamName, members] of Object.entries(db.teams)) {
-            teamStats[teamName] = { run: 0, bike: 0, swim: 0, bonus: 0 };
+            teamStats[teamName] = { run: 0, bike: 0, swim: 0, bonus: 0, streak: 0 };
             members.forEach(m => {
-                individualStats[m] = { name: m, team: teamName, cls: db.classes[m] || '', run: 0, bike: 0, swim: 0, bonus: 0 };
+                let st = streakStats[m] ? streakStats[m].score : 0;
+                individualStats[m] = { name: m, team: teamName, cls: db.classes[m] || '', run: 0, bike: 0, swim: 0, bonus: 0, streak: st };
+                teamStats[teamName].streak += st;
             });
         }
 
@@ -945,11 +1172,21 @@
                         individualStats[name] = { name: name, team: 'Tự do', cls: db.classes[name] || '', run: 0, bike: 0, swim: 0, bonus: 0 };
                         if (!teamStats['Tự do']) teamStats['Tự do'] = { run: 0, bike: 0, swim: 0, bonus: 0 };
                     }
-                    individualStats[name][sport] += val;
-                    if(individualStats[name].team !== 'Tự do') {
-                        teamStats[individualStats[name].team][sport] += val;
+                    
+                    let addAmount = 0;
+                    if (sport === 'bonus') {
+                        for(let k in val) {
+                            addAmount += val[k];
+                        }
                     } else {
-                        teamStats['Tự do'][sport] += val;
+                        addAmount = val;
+                    }
+
+                    individualStats[name][sport] += addAmount;
+                    if(individualStats[name].team !== 'Tự do') {
+                        teamStats[individualStats[name].team][sport] += addAmount;
+                    } else {
+                        teamStats['Tự do'][sport] += addAmount;
                     }
                 }
             }
@@ -959,9 +1196,9 @@
         let teamResults = [];
         for (const [tName, stat] of Object.entries(teamStats)) {
             if (tName === 'Tự do') continue; // Bỏ qua đội Tự do
-            let score = (stat.run * 2.5) + (stat.bike * 1) + (stat.swim * 20) + (stat.bonus * 1);
+            let score = (stat.run * 2.5) + (stat.bike * 1) + (stat.swim * 20) + stat.bonus + stat.streak;
             if (score > 0) {
-                teamResults.push({ team: tName, run: stat.run, bike: stat.bike, swim: stat.swim, bonus: stat.bonus, score: score });
+                teamResults.push({ team: tName, run: stat.run, bike: stat.bike, swim: stat.swim, bonus: stat.bonus, streak: stat.streak, score: score });
             }
         }
         teamResults.sort((a, b) => b.score - a.score);
@@ -970,9 +1207,9 @@
         let indResults = [];
         for (const [iName, stat] of Object.entries(individualStats)) {
             if (stat.team === 'Tự do') continue; // Bỏ qua các VĐV ngoài danh sách khai báo
-            let score = (stat.run * 2.5) + (stat.bike * 1) + (stat.swim * 20) + (stat.bonus * 1);
+            let score = (stat.run * 2.5) + (stat.bike * 1) + (stat.swim * 20) + stat.bonus + stat.streak;
             if (score > 0) {
-                indResults.push({ name: stat.name, team: stat.team, cls: stat.cls, run: stat.run, bike: stat.bike, swim: stat.swim, bonus: stat.bonus, score: score });
+                indResults.push({ name: stat.name, team: stat.team, cls: stat.cls, run: stat.run, bike: stat.bike, swim: stat.swim, bonus: stat.bonus, streak: stat.streak, score: score });
             }
         }
         indResults.sort((a, b) => b.score - a.score);
@@ -993,6 +1230,7 @@
                 <td>${res.bike.toFixed(2)}</td>
                 <td>${res.swim.toFixed(2)}</td>
                 <td style="color: #e67e22; font-weight: bold;">+${res.bonus.toFixed(2)}</td>
+                <td style="color: #e74c3c; font-weight: bold;">+${res.streak}</td>
             </tr>`;
             teamBody.innerHTML += tr;
         });
@@ -1017,6 +1255,7 @@
                 <td>${res.bike.toFixed(2)}</td>
                 <td>${res.swim.toFixed(2)}</td>
                 <td style="color: #e67e22; font-weight: bold;">+${res.bonus.toFixed(2)}</td>
+                <td style="color: #e74c3c; font-weight: bold;">+${res.streak}</td>
             </tr>`;
             indBody.innerHTML += tr;
         });
@@ -1042,24 +1281,28 @@
         
         for (let line of lines) {
             if (!line.trim()) continue;
-            // Tách theo tab (copy từ Excel) hoặc dấu phẩy
             let parts = line.includes('\t') ? line.split('\t') : line.split(',');
             
             let name = (parts[0] || '').trim();
             if (name) {
-                // Tự động sửa lỗi font và khớp tên
                 name = findBestMatch(name, allMembers);
 
-                let scoreStr = parts.length > 1 ? (parts[1] || '') : '';
-                // Lọc ra số
-                let score = parseFloat(scoreStr.replace(/[^\d.,]/g, '').replace(',', '.'));
+                let scores = [];
+                for(let i = 1; i < parts.length; i++) {
+                    let sStr = (parts[i] || '').trim();
+                    let sNum = parseFloat(sStr.replace(/[^\d.,]/g, '').replace(',', '.'));
+                    scores.push(!isNaN(sNum) ? sNum : '');
+                }
                 
                 let key = name.toLowerCase();
                 if (!pasteMap[key]) {
-                    pasteMap[key] = { name: name, score: !isNaN(score) ? score : '' };
+                    pasteMap[key] = { name: name, scores: scores };
                     order.push(key);
-                } else if (!isNaN(score)) {
-                    pasteMap[key].score = score;
+                } else {
+                    // Update scores if new paste has values
+                    scores.forEach((s, idx) => {
+                        if (s !== '') pasteMap[key].scores[idx] = s;
+                    });
                 }
             }
         }
@@ -1074,13 +1317,13 @@
             
             trs.forEach(tr => {
                 let nameInput = tr.querySelector('.input-name');
-                let scoreInput = tr.querySelector('.input-score');
+                let scoreInputs = Array.from(tr.querySelectorAll('.input-score'));
                 if (nameInput) {
                     let n = nameInput.value.trim();
                     if (n) {
-                        existingInputs[n.toLowerCase()] = { nameInput, scoreInput };
+                        existingInputs[n.toLowerCase()] = { nameInput, scoreInputs };
                     } else {
-                        emptyRows.push({ nameInput, scoreInput });
+                        emptyRows.push({ nameInput, scoreInputs });
                     }
                 }
             });
@@ -1091,27 +1334,36 @@
             for(let key of order) {
                 let row = pasteMap[key];
                 if (existingInputs[key]) {
-                    // Cập nhật thành tích cho người đã có
-                    existingInputs[key].scoreInput.value = row.score;
+                    row.scores.forEach((s, idx) => {
+                        if (existingInputs[key].scoreInputs[idx] && s !== '') {
+                            existingInputs[key].scoreInputs[idx].value = s;
+                        }
+                    });
                     filled++;
                 } else if (emptyRows.length > 0) {
-                    // Sử dụng dòng trống để điền
                     let emptyRow = emptyRows.shift();
                     emptyRow.nameInput.value = row.name;
-                    emptyRow.scoreInput.value = row.score;
+                    row.scores.forEach((s, idx) => {
+                        if (emptyRow.scoreInputs[idx] && s !== '') {
+                            emptyRow.scoreInputs[idx].value = s;
+                        }
+                    });
                     existingInputs[key] = emptyRow;
                     newCount++;
                 } else {
-                    // Tạo dòng mới
-                    let tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td><input type="text" class="input-name" placeholder="Tên VĐV..."></td>
-                        <td><input type="number" class="input-score" placeholder="0.0" step="0.01" min="0"></td>
-                    `;
-                    tr.querySelector('.input-name').value = row.name;
-                    tr.querySelector('.input-score').value = row.score;
-                    tbody.appendChild(tr);
-                    existingInputs[key] = { nameInput: tr.querySelector('.input-name'), scoreInput: tr.querySelector('.input-score') };
+                    let colCount = currentSport === 'bonus' ? db.bonusColumns.length : 1;
+                    let temp = document.createElement('table');
+                    temp.innerHTML = `<tbody>${buildRowHTML(colCount)}</tbody>`;
+                    let newTr = temp.querySelector('tr');
+                    
+                    newTr.querySelector('.input-name').value = row.name;
+                    let newScoreInputs = newTr.querySelectorAll('.input-score');
+                    row.scores.forEach((s, idx) => {
+                        if (newScoreInputs[idx] && s !== '') newScoreInputs[idx].value = s;
+                    });
+                    
+                    tbody.appendChild(newTr);
+                    existingInputs[key] = { nameInput: newTr.querySelector('.input-name'), scoreInputs: Array.from(newScoreInputs) };
                     newCount++;
                 }
             }
