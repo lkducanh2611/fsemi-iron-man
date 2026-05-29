@@ -155,95 +155,95 @@
   "sports": {
     "run": {
       "week1": {
-        "Tran Diep": {
-          "Thành Tích (km)": 39.1
-        },
-        "Võ Nguyễn Quang Huy": {
-          "Thành Tích (km)": 26.1
-        },
-        "Nguyen Vinh Quang": {
-          "Thành Tích (km)": 22.9
-        },
-        "Đỗ Hoài": {
-          "Thành Tích (km)": 22.5
-        },
-        "Sỹ Long": {
-          "Thành Tích (km)": 20.1
-        },
-        "Khiêm Ngô Tri": {
-          "Thành Tích (km)": 14.7
-        },
-        "Yến Giang": {
-          "Thành Tích (km)": 11.1
-        },
         "cuong nguyen": {
-          "Thành Tích (km)": 10.7
-        },
-        "Hải Vũ": {
-          "Thành Tích (km)": 10.5
+          "score": 10.7
         },
         "Tracy Le": {
-          "Thành Tích (km)": 10.5
+          "score": 10.5
         },
         "Hoa Hung Nguyen": {
-          "Thành Tích (km)": 10
-        },
-        "Thành Phan văn": {
-          "Thành Tích (km)": 9.6
-        },
-        "Mai Văn Khải": {
-          "Thành Tích (km)": 9.4
-        },
-        "Nguyen Ba Khanh Thien": {
-          "Thành Tích (km)": 7.6
-        },
-        "Duy Đăng Lương": {
-          "Thành Tích (km)": 6.2
-        },
-        "Mui Phan": {
-          "Thành Tích (km)": 6.2
-        },
-        "Dương Bình Cương": {
-          "Thành Tích (km)": 6.1
-        },
-        "Ngà Vũ Bích": {
-          "Thành Tích (km)": 6
-        },
-        "Chiến Nguyễn Văn": {
-          "Thành Tích (km)": 6
-        },
-        "Hải Nguyễn": {
-          "Thành Tích (km)": 5.8
-        },
-        "Phuc Vuong Xuan": {
-          "Thành Tích (km)": 5.4
-        },
-        "La Vie La Vie": {
-          "Thành Tích (km)": 5
-        },
-        "Hiếu Lê Đình Minh": {
-          "Thành Tích (km)": 4.6
-        },
-        "Sáng Trần": {
-          "Thành Tích (km)": 3.6
-        },
-        "Hữu Hùng Lâm": {
-          "Thành Tích (km)": 2.8
-        },
-        "Nguyen Vinh Ha": {
-          "Thành Tích (km)": 2.3
-        },
-        "Trúc Nguyễn": {
-          "Thành Tích (km)": 2.2
-        },
-        "Lê Giang Lê Giang": {
-          "Thành Tích (km)": 2.2
-        },
-        "Quang Lê minh": {
-          "Thành Tích (km)": 1.8
+          "score": 10
         },
         "Lan Hoàng": {
-          "Thành Tích (km)": 0.8
+          "score": 0.8
+        },
+        "Mui Phan": {
+          "score": 6.2
+        },
+        "Tran Diep": {
+          "score": 39.1
+        },
+        "Duy Đăng Lương": {
+          "score": 6.2
+        },
+        "Yến Giang": {
+          "score": 11.1
+        },
+        "Chiến Nguyễn Văn": {
+          "score": 6
+        },
+        "Ngà Vũ Bích": {
+          "score": 6
+        },
+        "Thành Phan văn": {
+          "score": 9.6
+        },
+        "Phuc Vuong Xuan": {
+          "score": 5.4
+        },
+        "Nguyen Vinh Ha": {
+          "score": 2.3
+        },
+        "Quang Lê minh": {
+          "score": 1.8
+        },
+        "Hải Nguyễn": {
+          "score": 5.8
+        },
+        "Hải Vũ": {
+          "score": 10.5
+        },
+        "Sỹ Long": {
+          "score": 20.1
+        },
+        "Trúc Nguyễn": {
+          "score": 2.2
+        },
+        "Dương Bình Cương": {
+          "score": 6.1
+        },
+        "Nguyen Ba Khanh Thien": {
+          "score": 7.6
+        },
+        "Hiếu Lê Đình Minh": {
+          "score": 4.6
+        },
+        "Nguyen Vinh Quang": {
+          "score": 22.9
+        },
+        "Hữu Hùng Lâm": {
+          "score": 2.8
+        },
+        "Đỗ Hoài": {
+          "score": 22.5
+        },
+        "Võ Nguyễn Quang Huy": {
+          "score": 26.1
+        },
+        "Khiêm Ngô Tri": {
+          "score": 14.7
+        },
+        "Mai Văn Khải": {
+          "score": 9.4
+        },
+        "Sáng Trần": {
+          "score": 3.6
+        },
+        "La Vie La Vie": {
+          "score": 5
+        },
+        "Lê Giang Lê Giang": {
+          "score": 2.2
         }
       },
       "week2": {},
