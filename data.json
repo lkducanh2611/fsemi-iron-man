@@ -258,30 +258,7 @@
       }
     },
     "bike": {
-      "week1": {
-        "Tran Diep": {
-          "Thành Tích (km)": 129.2
-        },
-        "Võ Nguyễn Quang Huy": 26.1,
-        "Sỹ Long": 20.1,
-        "cuong nguyen": {
-          "Thành Tích (km)": 153.8
-        },
-        "Đỗ Hoài": 15.5,
-        "Khiêm Ngô Tri": 14.7,
-        "Dũng Đặng Quang": {
-          "Thành Tích (km)": 32.6
-        },
-        "Mui Phan": {
-          "Thành Tích (km)": 29.3
-        },
-        "Hải Nguyễn": {
-          "Thành Tích (km)": 5
-        },
-        "minh tri nguyen": {
-          "Thành Tích (km)": 8.1
-        }
-      },
+      "week1": {},
       "week2": {},
       "week3": {},
       "week4": {},
