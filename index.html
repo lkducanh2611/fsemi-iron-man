@@ -1498,9 +1498,14 @@
             for (let w = 1; w <= TOTAL_WEEKS; w++) {
                 let wk = 'week' + w;
                 
-                let runKm = db.sports.run[wk] && db.sports.run[wk][name] !== undefined ? db.sports.run[wk][name] : 0;
-                let bikeKm = db.sports.bike[wk] && db.sports.bike[wk][name] !== undefined ? db.sports.bike[wk][name] : 0;
-                let swimKm = db.sports.swim[wk] && db.sports.swim[wk][name] !== undefined ? db.sports.swim[wk][name] : 0;
+                let rVal = db.sports.run[wk] && db.sports.run[wk][name] !== undefined ? db.sports.run[wk][name] : 0;
+                let runKm = (typeof rVal === 'object' && rVal !== null) ? Object.values(rVal).reduce((a, b) => a + b, 0) : rVal;
+                
+                let bVal = db.sports.bike[wk] && db.sports.bike[wk][name] !== undefined ? db.sports.bike[wk][name] : 0;
+                let bikeKm = (typeof bVal === 'object' && bVal !== null) ? Object.values(bVal).reduce((a, b) => a + b, 0) : bVal;
+                
+                let sVal = db.sports.swim[wk] && db.sports.swim[wk][name] !== undefined ? db.sports.swim[wk][name] : 0;
+                let swimKm = (typeof sVal === 'object' && sVal !== null) ? Object.values(sVal).reduce((a, b) => a + b, 0) : sVal;
                 
                 let bonusVal = db.sports.bonus[wk] && db.sports.bonus[wk][name] !== undefined ? db.sports.bonus[wk][name] : {};
                 let bonusPoints = 0;
