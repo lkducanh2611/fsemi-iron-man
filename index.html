@@ -422,6 +422,17 @@
 
                 </div>
 
+                <!-- Upload Tổng hợp 3 môn -->
+                <div class="upload-section" id="upload-section" style="background: #e8f4fd; border-color: #3498db; margin-bottom: 15px;">
+                    <label for="excel-upload" style="color: #2980b9;">
+                        <span class="upload-icon">📁</span>
+                        Tải lên File Điểm Tổng Hợp (Bơi, Đạp, Chạy)
+                    </label>
+                    <input type="file" id="excel-upload" accept=".xlsx,.xls,.csv" onchange="handleExcelUpload(event)">
+                    <div class="note">File gồm ít nhất 3 cột: <strong>Cột Môn Thể Thao</strong> (Bơi/Đạp/Chạy), <strong>Cột Tên</strong> và <strong>Cột Thành Tích</strong>.<br>Dữ liệu sẽ được lưu thẳng vào hệ thống, <strong>không làm mất cột Phát Sinh hiện tại</strong>.</div>
+                    <div class="upload-filename" id="upload-filename"></div>
+                </div>
+
                 <!-- Tabs chọn môn -->
                 <div class="tabs">
                     <button class="tab-btn active" onclick="switchSport('run', this)">🏃 Chạy Bộ (x2.5)</button>
@@ -464,16 +475,7 @@
                     </div>
                 </div>
 
-                <!-- Upload Excel -->
-                <div class="upload-section" id="upload-section">
-                    <label for="excel-upload">
-                        <span class="upload-icon">📁</span>
-                        Chọn file Excel để nhập thành tích
-                    </label>
-                    <input type="file" id="excel-upload" accept=".xlsx,.xls,.csv" onchange="handleExcelUpload(event)">
-                    <div class="note">File Excel gồm 2 cột: <strong>Tên</strong> và <strong>Thành Tích (km)</strong>. Hỗ trợ .xlsx, .xls, .csv</div>
-                    <div class="upload-filename" id="upload-filename"></div>
-                </div>
+
 
                 <!-- Bảng nhập điểm -->
                 <div class="table-scroll-wrapper" id="score-table-container">
@@ -1220,7 +1222,7 @@
 
     // Xử lý dữ liệu CSV từ PapaParse
     function processCSVData(rows) {
-        if (isMultiSportFormat(rows)) {
+        if (currentSport !== 'bonus') {
             processMultiSportData(rows, 0, 1, 2);
             return;
         }
@@ -1316,7 +1318,7 @@
             return;
         }
 
-        if (isMultiSportFormat(rows)) {
+        if (currentSport !== 'bonus') {
             processMultiSportData(rows, 0, 1, 2);
             return;
         }
