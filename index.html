@@ -1153,13 +1153,25 @@
     // Xử lý dữ liệu CSV từ PapaParse
     function processCSVData(rows) {
         let container = document.getElementById('score-table-container');
-        let headerText = currentSport === 'bonus' ? 'Điểm Cộng' : 'Thành Tích (km)';
+        let week = document.getElementById('week-select').value;
+        let cols = currentSport === 'bonus' ? db.bonusColumns : ['Thành Tích (km)', 'Phát Sinh'];
+        
         let tableHTML = `<table class="score-table" id="score-table">
             <thead>
                 <tr>
-                    <th style="text-align:left; padding-left:8px;">Tên VĐV</th>
-                    <th style="width:140px">${headerText}</th>
-                </tr>
+                    <th style="text-align:left; padding-left:8px;">Tên VĐV</th>`;
+        
+        cols.forEach((colName, idx) => {
+            if (currentSport === 'bonus') {
+                tableHTML += `<th style="width:120px; text-align:center;">
+                    <div contenteditable="true" onblur="updateBonusColumnName(${idx}, this.innerText)" style="border-bottom: 1px dashed #ccc; display:inline-block; min-width: 60px; padding: 2px;" title="Nhấn để sửa tên">${escapeHtml(colName)}</div>
+                </th>`;
+            } else {
+                tableHTML += `<th style="width:140px; text-align:center;">${escapeHtml(colName)}</th>`;
+            }
+        });
+        
+        tableHTML += `</tr>
             </thead>
             <tbody>`;
 
@@ -1186,10 +1198,21 @@
 
             let scoreStr = (rawScore !== undefined && rawScore !== null) ? rawScore.toString().replace(/[^\d.,]/g, '').replace(',', '.') : '';
             let score = parseFloat(scoreStr);
-            let val = !isNaN(score) ? score : '';
+            
+            let scores = [];
+            scores.push(!isNaN(score) ? score : '');
+            
+            if (currentSport !== 'bonus' && cols.length > 1) {
+                let dbVal = db.sports[currentSport] && db.sports[currentSport][week] ? db.sports[currentSport][week][name] : null;
+                let existingPhatSinh = '';
+                if (dbVal && typeof dbVal === 'object' && dbVal['Phát Sinh'] !== undefined) {
+                    existingPhatSinh = dbVal['Phát Sinh'];
+                }
+                scores.push(existingPhatSinh);
+            }
             
             tableHTML += buildRowHTML(cols.length);
-            rowData.push({name, val});
+            rowData.push({name, scores});
             count++;
         }
 
@@ -1199,7 +1222,12 @@
         let trs = container.querySelectorAll('tbody tr');
         trs.forEach((tr, idx) => {
             tr.querySelector('.input-name').value = rowData[idx].name;
-            tr.querySelector('.input-score').value = rowData[idx].val;
+            let sInputs = tr.querySelectorAll('.input-score');
+            rowData[idx].scores.forEach((s, sIdx) => {
+                if (sInputs[sIdx] && s !== '') {
+                    sInputs[sIdx].value = s;
+                }
+            });
         });
 
         showToast(`Đã nhập ${count} VĐV từ file CSV. Nhấn "Lưu Thành Tích" để lưu.`);
@@ -1232,8 +1260,8 @@
         let count = 0;
         let rowData = [];
         let allMembers = getAllMembers();
-        
-        let cols = currentSport === 'bonus' ? db.bonusColumns : ['Thành Tích (km)'];
+        let week = document.getElementById('week-select').value;
+        let cols = currentSport === 'bonus' ? db.bonusColumns : ['Thành Tích (km)', 'Phát Sinh'];
 
         let tableHTML = `<table class="score-table" id="score-table">
             <thead>
@@ -1268,7 +1296,17 @@
                 let rawScore = row[j+1];
                 let scoreStr = (rawScore !== undefined && rawScore !== null) ? rawScore.toString().replace(/[^\d.,]/g, '').replace(',', '.') : '';
                 let score = parseFloat(scoreStr);
-                scores.push(!isNaN(score) ? score : '');
+                
+                if (currentSport !== 'bonus' && j === 1 && (scoreStr === '' || isNaN(score))) {
+                    let dbVal = db.sports[currentSport] && db.sports[currentSport][week] ? db.sports[currentSport][week][name] : null;
+                    let existingPhatSinh = '';
+                    if (dbVal && typeof dbVal === 'object' && dbVal['Phát Sinh'] !== undefined) {
+                        existingPhatSinh = dbVal['Phát Sinh'];
+                    }
+                    scores.push(existingPhatSinh);
+                } else {
+                    scores.push(!isNaN(score) ? score : '');
+                }
             }
             
             tableHTML += buildRowHTML(cols.length);
