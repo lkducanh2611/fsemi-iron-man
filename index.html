@@ -1216,6 +1216,7 @@
         }
         
         saveDB();
+        updateLeaderboard();
         renderScoreTable();
         showToast(`Đã lưu dữ liệu tổng hợp: Bơi (${stats.swim}), Đạp (${stats.bike}), Chạy (${stats.run})`);
     }
@@ -1414,7 +1415,7 @@
     // Lưu dữ liệu điểm từ bảng ô
     function saveSportData() {
         let week = document.getElementById('week-select').value;
-        let cols = currentSport === 'bonus' ? db.bonusColumns : ['score'];
+        let cols = currentSport === 'bonus' ? db.bonusColumns : ['Thành Tích (km)', 'Phát Sinh'];
         let rows = document.querySelectorAll('#score-table tbody tr');
 
         // Thu thập những người đang hiển thị trên bảng
@@ -1459,6 +1460,7 @@
         });
 
         saveDB();
+        updateLeaderboard();
         showToast('Đã lưu thành tích thành công!');
     }
 
