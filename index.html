@@ -1150,8 +1150,80 @@
         return raw;
     }
 
+    function detectSportFromText(text) {
+        if (!text) return null;
+        let t = text.toString().toLowerCase().trim();
+        if (t.includes('bơi') || t.includes('swim')) return 'swim';
+        if (t.includes('đạp') || t.includes('xe') || t.includes('bike') || t.includes('ride')) return 'bike';
+        if (t.includes('chạy') || t.includes('run') || t.includes('walk') || t.includes('đi bộ')) return 'run';
+        return null;
+    }
+
+    function isMultiSportFormat(rows) {
+        if (!rows || rows.length < 2) return false;
+        // Kiểm tra vài dòng đầu xem cột 1 có phải là môn thể thao không
+        for (let i = 0; i < Math.min(5, rows.length); i++) {
+            let row = rows[i];
+            if (row && row.length >= 3) {
+                let sport = detectSportFromText(row[0]);
+                if (sport) return true;
+            }
+        }
+        return false;
+    }
+
+    function processMultiSportData(rows, sportCol, nameCol, scoreCol) {
+        let week = document.getElementById('week-select').value;
+        let allMembers = getAllMembers();
+        let stats = { run: 0, bike: 0, swim: 0 };
+        
+        for (let i = 0; i < rows.length; i++) {
+            let row = rows[i];
+            if (!row || row.length <= Math.max(sportCol, nameCol, scoreCol)) continue;
+            
+            let sportType = detectSportFromText(row[sportCol]);
+            if (!sportType) continue; 
+            
+            let rawName = (row[nameCol] !== undefined && row[nameCol] !== null) ? row[nameCol].toString().trim() : '';
+            if (!rawName) continue;
+            if (i === 0 && rawName.toLowerCase().includes('tên')) continue;
+            
+            let name = rawName.replace(/[\x00-\x1F\x7F]/g, '').trim();
+            if (!name) continue;
+            name = findBestMatch(name, allMembers);
+            
+            let rawScore = row[scoreCol];
+            let scoreStr = (rawScore !== undefined && rawScore !== null) ? rawScore.toString().replace(/[^\d.,]/g, '').replace(',', '.') : '';
+            let score = parseFloat(scoreStr);
+            if (isNaN(score)) continue;
+            
+            let dbVal = db.sports[sportType] && db.sports[sportType][week] ? db.sports[sportType][week][name] : null;
+            let existingPhatSinh = '';
+            if (dbVal && typeof dbVal === 'object' && dbVal['Phát Sinh'] !== undefined) {
+                existingPhatSinh = dbVal['Phát Sinh'];
+            }
+            
+            if (!db.sports[sportType]) db.sports[sportType] = {};
+            if (!db.sports[sportType][week]) db.sports[sportType][week] = {};
+            
+            let obj = { 'Thành Tích (km)': score };
+            if (existingPhatSinh !== '') obj['Phát Sinh'] = parseFloat(existingPhatSinh);
+            
+            db.sports[sportType][week][name] = obj;
+            stats[sportType]++;
+        }
+        
+        saveDB();
+        renderScoreTable();
+        showToast(`Đã lưu dữ liệu tổng hợp: Bơi (${stats.swim}), Đạp (${stats.bike}), Chạy (${stats.run})`);
+    }
+
     // Xử lý dữ liệu CSV từ PapaParse
     function processCSVData(rows) {
+        if (isMultiSportFormat(rows)) {
+            processMultiSportData(rows, 0, 1, 2);
+            return;
+        }
         let container = document.getElementById('score-table-container');
         let week = document.getElementById('week-select').value;
         let cols = currentSport === 'bonus' ? db.bonusColumns : ['Thành Tích (km)', 'Phát Sinh'];
@@ -1241,6 +1313,11 @@
 
         if(rows.length === 0) {
             showToast('File trống!');
+            return;
+        }
+
+        if (isMultiSportFormat(rows)) {
+            processMultiSportData(rows, 0, 1, 2);
             return;
         }
 
