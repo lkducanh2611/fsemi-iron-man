@@ -155,36 +155,87 @@
   "sports": {
     "run": {
       "week1": {
-        "cuong nguyen": 15.7,
-        "Tracy Le": 7.5,
-        "Hoa Hung Nguyen": 7.1,
-        "Mui Phan": 6.2,
-        "Tran Diep": 31,
-        "Duy Đăng Lương": 6.2,
-        "Ngoc Dang": 2,
-        "BinhNT142": 25.2,
-        "Yến Giang": 3,
-        "CuongLD7": 5,
-        "Chiến Nguyễn Văn": 6,
-        "Ngà Vũ Bích": 6,
-        "Thành Phan văn": 7.3,
-        "Phuc Vuong Xuan": 5.4,
-        "Nguyen Vinh Ha": 1.2,
-        "Quang Lê minh": 1.8,
-        "Hải Nguyễn": 5.8,
-        "Hải Vũ": 10.5,
-        "Sỹ Long": 20.1,
-        "Trúc Nguyễn": 2.2,
-        "Dương Bình Cương": 0.9,
-        "Nguyen Ba Khanh Thien": 7.6,
-        "Nguyen Vinh Quang": 2.9,
-        "Hữu Hùng Lâm": 1.1,
-        "Đỗ Hoài": 15.5,
-        "Võ Nguyễn Quang Huy": 26.1,
-        "Khiêm Ngô Tri": 14.7,
-        "Mai Văn Khải": 4,
-        "La Vie": 5,
-        "Lê Giang": 2.2
+        "cuong nguyen": {
+          "score": 15.7
+        },
+        "Tracy Le": {
+          "score": 7.5
+        },
+        "Hoa Hung Nguyen": {
+          "score": 7.1
+        },
+        "Mui Phan": {
+          "score": 6.2
+        },
+        "Tran Diep": {
+          "score": 31
+        },
+        "Yến Giang": {
+          "score": 3
+        },
+        "CuongLD7": {
+          "score": 5
+        },
+        "Chiến Nguyễn Văn": {
+          "score": 6
+        },
+        "Ngà Vũ Bích": {
+          "score": 6
+        },
+        "Thành Phan văn": {
+          "score": 7.3
+        },
+        "Phuc Vuong Xuan": {
+          "score": 5.4
+        },
+        "Nguyen Vinh Ha": {
+          "score": 1.2
+        },
+        "Quang Lê minh": {
+          "score": 1.8
+        },
+        "Hải Nguyễn": {
+          "score": 5.8
+        },
+        "Hải Vũ": {
+          "score": 10.5
+        },
+        "Sỹ Long": {
+          "score": 20.1
+        },
+        "Trúc Nguyễn": {
+          "score": 2.2
+        },
+        "Dương Bình Cương": {
+          "score": 0.9
+        },
+        "Nguyen Ba Khanh Thien": {
+          "score": 7.6
+        },
+        "Nguyen Vinh Quang": {
+          "score": 2.9
+        },
+        "Hữu Hùng Lâm": {
+          "score": 1.1
+        },
+        "Đỗ Hoài": {
+          "score": 15.5
+        },
+        "Võ Nguyễn Quang Huy": {
+          "score": 26.1
+        },
+        "Khiêm Ngô Tri": {
+          "score": 14.7
+        },
+        "Mai Văn Khải": {
+          "score": 4
+        },
+        "La Vie": {
+          "score": 5
+        },
+        "Lê Giang": {
+          "score": 2.2
+        }
       },
       "week2": {},
       "week3": {},
