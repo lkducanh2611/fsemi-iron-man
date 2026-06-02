@@ -7,12 +7,13 @@
       "Lan Hoàng",
       "Liinh Cute",
       "Mui Phan",
-      "Tú Cẩm"
+      "Tú Cẩm",
+      "Hải Nguyển Đức"
     ],
     "Team Bơi như tó": [
       "Hai Le",
       "Tran Diep",
-      "Huyền Bùi Thanh",
+      "Thanh Huyền",
       "Quỳnh Lê",
       "Vân Nguyễn"
     ],
@@ -21,9 +22,9 @@
       "Duy Đăng Lương",
       "Minh Mơ Mộng",
       "Ngoc Dang",
-      "BinhNT142",
+      "Thanh Bình Nguyễn",
       "Yến Giang",
-      "CuongLD7"
+      "La Vie"
     ],
     "Team Lộn Xộn": [
       "Chiến Nguyễn Văn",
@@ -66,21 +67,21 @@
     "Team Dưỡng sinh bất ổn": [
       "Đỗ Hoài",
       "Võ Nguyễn Quang Huy",
-      "dongdv14",
+      "Đông Đặng",
       "Khiêm Ngô Tri",
       "thanhnc42",
       "luanpv8",
-      "HienPK1",
+      "Hien Phan",
       "Phuc Bui"
     ],
-    "Team hjhj": [
+    "Team Beering Man": [
       "Mai Văn Khải",
       "Sáng Trần",
       "Bien Nguyen Xuan",
       "Trường Athlete",
       "Mai Dao Thanh",
-      "ThuDNT",
-      "Ducnm117"
+      "Thư Đặng",
+      "Minh Đức Nguyễn"
     ]
   },
   "classes": {
@@ -91,18 +92,19 @@
     "Liinh Cute": "D",
     "Mui Phan": "C",
     "Tú Cẩm": "D",
+    "Hải Nguyển Đức": "D",
     "Hai Le": "B",
     "Tran Diep": "A",
-    "Huyền Bùi Thanh": "B",
+    "Thanh Huyền": "B",
     "Quỳnh Lê": "A",
     "Vân Nguyễn": "D",
     "Thu Hường": "D",
     "Duy Đăng Lương": "D",
     "Minh Mơ Mộng": "A",
     "Ngoc Dang": "D",
-    "BinhNT142": "C",
+    "Thanh Bình Nguyễn": "C",
     "Yến Giang": "C",
-    "CuongLD7": "B",
+    "La Vie": "B",
     "Chiến Nguyễn Văn": "A",
     "Dũng Đặng Quang": "C",
     "Ngà Vũ Bích": "D",
@@ -135,19 +137,19 @@
     "ThuVTA7": "D",
     "Đỗ Hoài": "C",
     "Võ Nguyễn Quang Huy": "D",
-    "dongdv14": "D",
+    "Đông Đặng": "D",
     "Khiêm Ngô Tri": "A",
     "thanhnc42": "D",
     "luanpv8": "C",
-    "HienPK1": "B",
+    "Hien Phan": "B",
     "Phuc Bui": "D",
     "Mai Văn Khải": "B",
     "Sáng Trần": "D",
     "Bien Nguyen Xuan": "C",
     "Trường Athlete": "B",
     "Mai Dao Thanh": "A",
-    "ThuDNT": "D",
-    "Ducnm117": "D"
+    "Thư Đặng": "D",
+    "Minh Đức Nguyễn": "D"
   },
   "bonusColumns": [
     "Bonus"
