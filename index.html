@@ -1470,6 +1470,7 @@
             let week = document.getElementById('week-select').value;
             db.sports[currentSport][week] = {};
             saveDB();
+            updateLeaderboard();
             renderScoreTable();
             showToast("Đã reset dữ liệu thành công!");
         }
