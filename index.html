@@ -490,18 +490,7 @@
                     <button class="btn-save" onclick="saveSportData()" style="flex: 7;">Lưu Thành Tích</button>
                     <button onclick="resetSportData()" style="flex: 3; background: #e74c3c; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; padding: 10px;">Làm Lại (Reset)</button>
                 </div>
-                <!-- Settings sub‑tab (hidden by default) -->
-                <div id="admin-settings" class="page" style="display:none;">
-                    <h3 style="text-align:center; color: var(--secondary);">CÀI ĐẶT</h3>
-                    <div style="margin:20px;">
-                        <label>GitHub Personal Access Token:</label><br>
-                        <input type="password" id="github-token-input" placeholder="ghp_..." style="width:350px; padding:8px; border:1px solid #bdc3c7; border-radius:4px;" />
-                        <button onclick="saveGithubToken()" style="padding:8px 15px; background:#3498db; color:white; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">Lưu Token</button>
-                        <span id="token-status" style="margin-left:10px; font-size:14px; font-weight:bold;"></span>
-                    </div>
-                    
-                    <button onclick="hideAdminSettings()" style="margin:20px; padding:8px 15px; background:#7f8c8d; color:white; border:none; border-radius:4px; cursor:pointer;">← Quay lại</button>
-                </div>
+
             </div>
         </div>
         </div> <!-- End admin-content -->
@@ -559,7 +548,7 @@
         try {
             let token = localStorage.getItem('ghToken');
             let headers = {};
-            if (token) headers['Authorization'] = `token ${token}`;
+            if (token) headers['Authorization'] = `Bearer ${token}`;
 
             // Sử dụng GitHub API thay vì raw để không bị cache (luôn lấy dữ liệu mới nhất tức thì)
             let res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE_PATH}?t=${Date.now()}`, { headers });
@@ -690,7 +679,7 @@
         showLoading("Đang đẩy dữ liệu lên Public Server...");
         try {
             let getRes = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE_PATH}?t=${Date.now()}`, {
-                headers: { 'Authorization': `token ${token}` }
+                headers: { 'Authorization': `Bearer ${token}` }
             });
             let sha = "";
             if (getRes.ok) {
@@ -704,7 +693,7 @@
             let putRes = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/contents/${GITHUB_FILE_PATH}`, {
                 method: 'PUT',
                 headers: { 
-                    'Authorization': `token ${token}`,
+                    'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
@@ -1844,33 +1833,7 @@
 
     // ==========================================
     // CÁC HÀM XUẤT EXCEL
-// ---------------------------------------------------------
-// Settings helpers (GitHub token & Strava IDs)
-function showAdminSettings(){
-    // hide main admin page (id="admin") and show settings page
-    const adminDiv = document.getElementById('admin');
-    if(adminDiv) adminDiv.style.display='none';
-    const settingsDiv = document.getElementById('admin-settings');
-    if(settingsDiv) settingsDiv.style.display='block';
-    // preload stored values
-    document.getElementById('github-token-input').value = localStorage.getItem('githubToken')||'';
-}
-function hideAdminSettings(){
-    const settingsDiv = document.getElementById('admin-settings');
-    if(settingsDiv) settingsDiv.style.display='none';
-    const adminDiv = document.getElementById('admin');
-    if(adminDiv) adminDiv.style.display='block';
-}
-function saveGithubToken(){
-    const token = document.getElementById('github-token-input').value.trim();
-    if(token){
-        localStorage.setItem('githubToken', token);
-        document.getElementById('token-status').textContent='✔️ Lưu thành công';
-    } else {
-        document.getElementById('token-status').textContent='⚠️ Vui lòng nhập token';
-    }
-}
-// ==========================================
+
     function exportToExcel(dataArray, filename) {
         if (!window.XLSX) {
             alert("Thư viện xuất Excel chưa được tải. Vui lòng kiểm tra lại kết nối mạng!");
