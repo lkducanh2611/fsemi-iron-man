@@ -328,6 +328,9 @@
         "Tú Cẩm": {
           "Thành Tích (km)": 25.2
         },
+        "Hải Nguyển Đức": {
+          "Thành Tích (km)": 10
+        },
         "Hai Le": {
           "Thành Tích (km)": 11
         },
@@ -348,6 +351,9 @@
         },
         "Minh Mơ Mộng": {
           "Thành Tích (km)": 3.7
+        },
+        "Ngoc Dang": {
+          "Thành Tích (km)": 2.15
         },
         "Thanh Bình Nguyễn": {
           "Thành Tích (km)": 5.8
@@ -384,6 +390,9 @@
         },
         "Vũ Khắc  Hải": {
           "Thành Tích (km)": 62.9
+        },
+        "Sỹ Long": {
+          "Thành Tích (km)": 8.3
         },
         "Dương Bình Cương": {
           "Thành Tích (km)": 1.3
@@ -435,15 +444,6 @@
         },
         "Oanh Luong": {
           "Thành Tích (km)": 6.6
-        },
-        "Hải Nguyển Đức": {
-          "Thành Tích (km)": 10
-        },
-        "Sỹ Long": {
-          "Thành Tích (km)": 8.3
-        },
-        "Ngoc Dang": {
-          "Thành Tích (km)": 2.15
         }
       },
       "week3": {},
