@@ -447,11 +447,59 @@
         }
       },
       "week3": {
+        "cuong nguyen": {
+          "Thành Tích (km)": 39.1
+        },
+        "Tracy Le": {
+          "Thành Tích (km)": 14.8
+        },
+        "Hoa Hung Nguyen": {
+          "Thành Tích (km)": 40.6
+        },
+        "Lan Hoàng": {
+          "Thành Tích (km)": 11.1
+        },
+        "Liinh Cute": {
+          "Thành Tích (km)": 3.1
+        },
+        "Mui Phan": {
+          "Thành Tích (km)": 9.5
+        },
+        "Tú Cẩm": {
+          "Thành Tích (km)": 2
+        },
+        "Hải Nguyển Đức": {
+          "Thành Tích (km)": 5
+        },
+        "Hai Le": {
+          "Thành Tích (km)": 12.5
+        },
         "Tran Diep": {
           "Thành Tích (km)": 70.6
         },
-        "Lê Giang": {
-          "Thành Tích (km)": 67.3
+        "Thanh Huyền": {
+          "Thành Tích (km)": 20.6
+        },
+        "Quỳnh Lê": {
+          "Thành Tích (km)": 2.3
+        },
+        "Vân Nguyễn": {
+          "Thành Tích (km)": 7.7
+        },
+        "Thu Hường": {
+          "Thành Tích (km)": 11.4
+        },
+        "Duy Đăng Lương": {
+          "Thành Tích (km)": 13.3
+        },
+        "Ngoc Dang": {
+          "Thành Tích (km)": 9.4
+        },
+        "Yến Giang": {
+          "Thành Tích (km)": 25.8
+        },
+        "La Vie": {
+          "Thành Tích (km)": 10.6
         },
         "Chiến Nguyễn Văn": {
           "Thành Tích (km)": 60.7
@@ -459,113 +507,65 @@
         "Thành Phan văn": {
           "Thành Tích (km)": 47.6
         },
-        "Hoa Hung Nguyen": {
-          "Thành Tích (km)": 40.6
-        },
-        "cuong nguyen": {
-          "Thành Tích (km)": 39.1
-        },
-        "Nguyen Vinh Quang": {
-          "Thành Tích (km)": 37.5
-        },
-        "Thanh Huyền": {
-          "Thành Tích (km)": 20.6
-        },
-        "Yến Giang": {
-          "Thành Tích (km)": 25.8
-        },
-        "Tracy Le": {
-          "Thành Tích (km)": 14.8
-        },
-        "Đông Đặng": {
-          "Thành Tích (km)": 14.7
-        },
-        "Nguyen Ba Khanh Thien": {
-          "Thành Tích (km)": 13.6
-        },
-        "Duy Đăng Lương": {
-          "Thành Tích (km)": 13.3
-        },
-        "Hai Le": {
-          "Thành Tích (km)": 12.5
-        },
-        "Trường Athlete": {
-          "Thành Tích (km)": 11.5
-        },
-        "Thu Hường": {
-          "Thành Tích (km)": 11.4
-        },
-        "Lan Hoàng": {
-          "Thành Tích (km)": 11.1
-        },
-        "Tho Nguyen": {
-          "Thành Tích (km)": 10.9
-        },
-        "La Vie": {
-          "Thành Tích (km)": 10.6
-        },
-        "Vũ Khắc  Hải": {
-          "Thành Tích (km)": 10.5
-        },
-        "Mai Văn Khải": {
-          "Thành Tích (km)": 10.3
-        },
-        "Mui Phan": {
-          "Thành Tích (km)": 9.5
-        },
-        "Ngoc Dang": {
-          "Thành Tích (km)": 9.4
-        },
-        "Trang Nguyen": {
-          "Thành Tích (km)": 9.1
-        },
-        "Oanh Luong": {
-          "Thành Tích (km)": 9
+        "Ho Chi Cong": {
+          "Thành Tích (km)": 6.7
         },
         "Quang Lê minh": {
           "Thành Tích (km)": 8.5
         },
-        "Hữu Hùng Lâm": {
-          "Thành Tích (km)": 8.2
+        "Tho Nguyen": {
+          "Thành Tích (km)": 10.9
         },
-        "Vân Nguyễn": {
-          "Thành Tích (km)": 7.7
-        },
-        "Ho Chi Cong": {
-          "Thành Tích (km)": 6.7
-        },
-        "Sỹ Long": {
-          "Thành Tích (km)": 5.1
-        },
-        "Hải Nguyển Đức": {
-          "Thành Tích (km)": 5
-        },
-        "Cường Cao": {
-          "Thành Tích (km)": 4.6
-        },
-        "Hien Phan": {
-          "Thành Tích (km)": 4.2
+        "Trang Nguyen": {
+          "Thành Tích (km)": 9.1
         },
         "Chính Nguyến Thanh": {
           "Thành Tích (km)": 3.8
         },
-        "Sáng Trần": {
-          "Thành Tích (km)": 3.4
+        "Vũ Khắc  Hải": {
+          "Thành Tích (km)": 10.5
         },
-        "Liinh Cute": {
-          "Thành Tích (km)": 3.1
-        },
-        "Quỳnh Lê": {
-          "Thành Tích (km)": 2.3
-        },
-        "Tú Cẩm": {
-          "Thành Tích (km)": 2
+        "Sỹ Long": {
+          "Thành Tích (km)": 5.1
         },
         "Trúc Nguyễn": {
           "Thành Tích (km)": 0.3
         },
+        "Nguyen Ba Khanh Thien": {
+          "Thành Tích (km)": 13.6
+        },
         "Hiếu Lê Đình Minh": {
           "Thành Tích (km)": 0.1
+        },
+        "Nguyen Vinh Quang": {
+          "Thành Tích (km)": 37.5
+        },
+        "Hữu Hùng Lâm": {
+          "Thành Tích (km)": 8.2
+        },
+        "Cường Cao": {
+          "Thành Tích (km)": 4.6
+        },
+        "Đông Đặng": {
+          "Thành Tích (km)": 14.7
+        },
+        "Hien Phan": {
+          "Thành Tích (km)": 4.2
+        },
+        "Mai Văn Khải": {
+          "Thành Tích (km)": 10.3
+        },
+        "Sáng Trần": {
+          "Thành Tích (km)": 3.4
+        },
+        "Trường Athlete": {
+          "Thành Tích (km)": 11.5
+        },
+        "Lê Giang": {
+          "Thành Tích (km)": 67.3
+        },
+        "Oanh Luong": {
+          "Thành Tích (km)": 9
         }
       },
       "week4": {},
