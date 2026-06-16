@@ -637,9 +637,6 @@
         }
       },
       "week3": {
-        "cuong nguyen": {
-          "Thành Tích (km)": 265.1
-        },
         "Tran Diep": {
           "Thành Tích (km)": 201.8
         },
@@ -649,14 +646,17 @@
         "Hai Le": {
           "Thành Tích (km)": 11
         },
-        "Hoa Hung Nguyen": {
-          "Thành Tích (km)": 2.8
-        },
         "Phương Nguyễn Quang": {
           "Thành Tích (km)": 298
         },
         "Dũng Đặng Quang": {
           "Thành Tích (km)": 21
+        },
+        "cuong nguyen": {
+          "Thành Tích (km)": 265.1
+        },
+        "Hoa Hung Nguyen": {
+          "Thành Tích (km)": 2.8
         }
       },
       "week4": {},
